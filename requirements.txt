@@ -1,5 +1,5 @@
 aiohttp==3.11.13
-bcrypt==4.3.0
+bcrypt==4.0.1
 fastapi==0.115.11
 motor==3.7.0
 passlib==1.7.4

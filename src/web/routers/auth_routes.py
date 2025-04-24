@@ -2,9 +2,11 @@
 # etc.
 
 import logging
+import uuid
+import json
 
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 
@@ -12,53 +14,61 @@ import config
 from models.auth_models import TokenDto
 from models.user_models import UserDto
 from modules.db import CollectionRef, UserRef
-from web.auth import require_api_key
 from web.user_auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
     create_access_token,
     get_current_active_user,
     get_password_hash,
-    get_user,
 )
+
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
+    prefix="/auth",
     tags=["users", "auth"],
 )
 
 
-@router.post("/users/me")
+@router.post("/me")
 async def read_users_me(
     current_user: Annotated[UserDto, Depends(get_current_active_user)],
 ) -> dict:
     return current_user.model_dump()
 
 
-@router.post("/users/account/reset-password")
-async def reset_password(
-    is_authorised: Annotated[OAuth2PasswordRequestForm, Depends(require_api_key)],
+@router.post("/register")
+async def register_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    questions: Annotated[str, Form(...)],
 ) -> dict:
+    parsed_questions = json.loads(questions)
+    
     user_collection = await config.db.get_collection(CollectionRef.USERS)
-    user = await get_user(form_data.username)
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    hashed_password = get_password_hash(form_data.password)
-    await user_collection.update_one(
-        {UserRef.ID: user.id},
-        {"$set": {UserRef.HASHED_PASSWORD: hashed_password}},
+    user = UserDto(
+        id = str(uuid.uuid4()),
+        # Probably should add sanity checks for the inputs.
+        name=form_data.username,
+        questions=parsed_questions,
     )
 
-    return {"message": "Password reset"}
+    if await user_collection.find_one({UserRef.NAME: user.name}):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with the same name already exists",
+        )
+
+    user.hashed_password = get_password_hash(form_data.password)
+
+    await user_collection.insert_one(user.model_dump())
+
+    _log.info(f"User {user.id} created")
+
+    return {"message": "User created", "user": user}
 
 
-@router.post("/token")
+@router.post("/login")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> TokenDto:
@@ -84,12 +94,10 @@ async def delete_user(
     deleted = None
     if user.id:
         deleted = await user_collection.delete_one({UserRef.ID: user.id})
-    elif user.email:
-        deleted = await user_collection.delete_one({UserRef.ID: user.email})
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User ID or Email was not specified",
+            detail="User ID was not specified",
         )
 
     if deleted.deleted_count > 0:
