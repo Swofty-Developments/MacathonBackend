@@ -8,6 +8,9 @@ class ResponseWrapperMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         response: _StreamingResponse = await call_next(request)
 
+        if request.url.path.startswith("/auth/login"):
+            return response
+
         body = b""
         async for chunk in response.body_iterator:
             body += chunk
