@@ -87,11 +87,11 @@ async def upload_location(
         }},
         upsert=True
     )
-    
+
     return {"message": "Location uploaded"}
 
 
-@router.get("/location/radiusFetch")
+@router.get("/location/radius-fetch/{user_id}")
 async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     user = await collection.find_one({LocationRef.USER: user_id})
