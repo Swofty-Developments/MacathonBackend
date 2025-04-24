@@ -13,8 +13,6 @@ if TYPE_CHECKING:
     from models.config_models import AppConfigDto
 
 
-INTERFACE_API_KEY: str = os.getenv("INTERFACE_API_KEY")
-
 app: FastAPI = None
 app_config: AppConfigDto = None
 # TODO: Add MongoDB connection type hint below.
