@@ -36,4 +36,7 @@ class QuestionDto(BaseModel):
 
 @router.get("/")
 async def get_questions() -> list[QuestionDto]:
-    return QUESTIONS
+    return {
+        "status": True,
+        "questions": QUESTIONS[:3],
+    }
