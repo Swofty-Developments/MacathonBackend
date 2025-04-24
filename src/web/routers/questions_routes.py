@@ -10,6 +10,8 @@ router = APIRouter(
     tags=["users", "questions"],
 )
 
+# Changing the order of these questions will also change the order of the
+# question IDs... so don't change their order.
 QUESTIONS = [
     "What course are you studying?",
     "What's your favourite TV Show?",
@@ -28,6 +30,14 @@ QUESTIONS = [
     "What's your favourite unit at Monash?",
 ]
 
+questions_with_id = [
+    {
+        "id": i,
+        "questionText": question,
+    }
+    for i, question in enumerate(QUESTIONS)
+]
+
 
 class QuestionDto(BaseModel):
     id: int
@@ -35,4 +45,4 @@ class QuestionDto(BaseModel):
 
 @router.get("/")
 async def get_questions() -> list[QuestionDto]:
-    return random.sample(QUESTIONS, 3)
+    return random.sample(questions_with_id, 3)
