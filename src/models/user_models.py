@@ -17,5 +17,5 @@ class PublicUserDto(BaseModel):
     questions: list[QuestionDto] = None
 
 
-class UserDto(DBRecord, PublicUserDto):
+class UserDto(PublicUserDto, DBRecord):
     hashed_password: Optional[str] = None
