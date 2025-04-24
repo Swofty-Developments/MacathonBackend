@@ -6,3 +6,5 @@ class UserRef(StrEnum):
     NAME = "name"
     HASHED_PASSWORD = "hashed_password"
     DISABLED = "disabled"
+    POINTS = "points"
+    QUESTIONS = "questions"
