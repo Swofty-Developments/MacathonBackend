@@ -14,7 +14,7 @@ from models.auth_models import TokenDto
 from models.user_models import UserDto
 from models.question_models import QuestionDto
 from modules.db import CollectionRef, UserRef
-from web.user_auth import (
+from web.auth.user_auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
     create_access_token,
