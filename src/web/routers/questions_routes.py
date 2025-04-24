@@ -101,7 +101,7 @@ def hash_string_to_int(_string: str) -> int:
     """
     return int(hashlib.sha256(_string.encode()).hexdigest(), 16)
 
-def get_unique_answer_seq(id_1: str, id_2: str) -> list[int]:
+def get_unique_answer_seq(id_1: str, id_2: str, unique_state: int) -> list[int]:
     """
     Generate a sequence 3 unique numbers from 0 to 3.
     The sequence will be used to generate the answer options for the MCQ.
@@ -112,7 +112,7 @@ def get_unique_answer_seq(id_1: str, id_2: str) -> list[int]:
         id_1: The UUID of the first user.
         id_2: The UUID of the first user.
     """
-    seed = hash_string_to_int(id_1 + id_2) % 1000000
+    seed = hash_string_to_int(id_1 + id_2) + unique_state % 1000000
     random.seed(seed)
 
     seq = random.sample(range(4), 3)
@@ -142,8 +142,9 @@ async def generate_mcq(
             detail="User not found",
         )
     
-    answer_seq = get_unique_answer_seq(user.id, other_user.id)
+    answer_seq = get_unique_answer_seq(user.id, other_user.id, user.points + other_user.points)
 
+    # Generate prompts for Groq.
     groq_prompts = []
     question_ids = []
     for i, question in enumerate(other_user.questions):
@@ -164,12 +165,14 @@ async def generate_mcq(
             }
         )
 
+    # Feed that shit to Groq.
     tasks = [config.groq.chat.completions.create(
         messages=[prompt],
         model="gemma2-9b-it",
     ) for prompt in groq_prompts]
     responses = await asyncio.gather(*tasks)
 
+    # Now parse Groq's responses.
     questions_answers = []
     for id, groq_response in zip(question_ids, responses):
         if not groq_response.choices[0]:
@@ -220,7 +223,7 @@ async def validate_mcq(
             detail="User not found",
         )
     
-    correct_answer_seq = get_unique_answer_seq(user.id, other_user.id)
+    correct_answer_seq = get_unique_answer_seq(user.id, other_user.id, user.points + other_user.points)
 
     correct_count = 0
     for answer, correct_answer in zip(answers, correct_answer_seq):
