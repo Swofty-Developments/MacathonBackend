@@ -43,6 +43,7 @@ class QuestionDto(BaseModel):
     id: int
     questionText: str
 
+
 @router.get("/")
 async def get_questions() -> list[QuestionDto]:
     return random.sample(questions_with_id, 3)

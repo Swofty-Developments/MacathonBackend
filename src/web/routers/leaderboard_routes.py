@@ -50,18 +50,15 @@ async def get_rank(user_id: str) -> int:
 
     return await rank
 
+
 @router.post("/set")
-async def set_points(user_id: str, points: int):
+async def set_points(user_id: str, points: int) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    query = { UserRef.ID: user_id }
+    query = {UserRef.ID: user_id}
 
-    update = {
-        '$set': {
-            UserRef.POINTS: points
-        }
-    }
+    update = {"$set": {UserRef.POINTS: points}}
 
     await collection.update_one(query, update)
 
-    return {'message': 'set points successfully'}
+    return {"message": "Set points successfully"}
