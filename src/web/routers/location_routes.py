@@ -3,17 +3,16 @@
 
 import logging
 import math
+from typing import Annotated
 
 from datetime import datetime, UTC
-from fastapi import APIRouter
-
-from typing import Optional
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 
 import config
-from modules.db import CollectionRef, LocationRef, UserRef
-
+from models.user_models import UserDto
 from models.user_models import PublicUserDto
+from modules.db import CollectionRef, LocationRef, UserRef
+from web.auth.user_auth import get_current_active_user
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
@@ -61,10 +60,14 @@ async def aggregate_locations() -> dict[tuple[float, float]]:
     return location_table
 
 @router.post("/location/upload/")
-async def upload_location(user_id: str, latitude: float, longitude: float) -> dict:
+async def upload_location(
+    user: Annotated[UserDto, Depends(get_current_active_user)],
+    latitude: float,
+    longitude: float
+) -> dict:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     await collection.insert_one({ 
-        LocationRef.USER: user_id,
+        LocationRef.USER: user.id,
         LocationRef.LATITUDE: latitude,
         LocationRef.LONGITUDE: longitude,
         LocationRef.CREATED: datetime.now(UTC)
