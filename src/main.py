@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import config
 from modules.db import MongoClient
+from web.middlewares.general import ResponseWrapperMiddleware
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -19,6 +20,9 @@ if TYPE_CHECKING:
 # instance.
 app = FastAPI()
 config.app = app
+
+app.add_middleware(ResponseWrapperMiddleware)
+
 _log = logging.getLogger("uvicorn")
 load_dotenv()
 

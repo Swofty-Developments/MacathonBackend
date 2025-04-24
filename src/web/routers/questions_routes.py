@@ -41,7 +41,4 @@ class Tempoary(BaseModel):
 
 @router.get("/")
 async def get_questions() -> Any:
-    return {
-        "status": "success",
-        "data": QUESTIONS[:3],
-    }
+    return QUESTIONS[:3]
