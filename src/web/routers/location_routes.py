@@ -84,6 +84,14 @@ async def fetch_radius(user_id: int, radius: float):
     
     projection = {}
 
-    return await collection.aggregate(
+    valid_users = await collection.aggregate(
         [{"$match": {UserRef.ID: {"$in": valid_user_ids}}}, {"$project": projection}]
     )
+
+    for user in valid_users:
+        valid_id = user[UserRef.ID]
+        (lat, lon) = location_table[valid_id]
+        user[LocationRef.LATITUDE] = lat
+        user[LocationRef.LONGITUDE] = lon
+    
+    return valid_users
