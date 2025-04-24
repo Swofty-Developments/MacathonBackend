@@ -7,8 +7,9 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 
 from .collections import CollectionRef
 from .users import UserRef
+from .locations import LocationRef
 
-__all__ = ["UserRef", "CollectionRef"]
+__all__ = ["UserRef", "CollectionRef", "LocationRef"]
 
 _log = logging.getLogger("uvicorn")
 

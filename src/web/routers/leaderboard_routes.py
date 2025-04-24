@@ -30,7 +30,7 @@ class LeaderboardUserDto(BaseModel):
 async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    return collection.aggregate(
+    return await collection.aggregate(
         [
             {"$sort": {UserRef.POINTS: -1, UserRef.NAME: 1}},
             {"$limit": int(size)},
@@ -40,7 +40,7 @@ async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
 
 
 @router.get("/leaderboard/rank/{user_id}")
-async def get_rank(user_id: str) -> int:
+async def get_rank(user_id: int) -> int:
     points = await config.db.find_one({UserRef.ID: user_id})[UserRef.POINTS]
     rank = (
         await config.db.aggregate(
@@ -49,4 +49,4 @@ async def get_rank(user_id: str) -> int:
         + 1
     )
 
-    return rank
+    return await rank

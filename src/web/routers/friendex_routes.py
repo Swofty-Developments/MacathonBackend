@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.get("/friendex/{user_id}")
-async def get_entry(user_id: str) -> dict:
+async def get_entry(user_id: int) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
     query = {UserRef.ID: user_id}
@@ -26,7 +26,7 @@ async def get_entry(user_id: str) -> dict:
 
 
 @router.get("/friendex/friends/{user_id}")
-async def get_friends(user_id: str) -> dict:
+async def get_friends(user_id: int) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
     friends = await collection.find_one({UserRef.ID: user_id})["friends"]
