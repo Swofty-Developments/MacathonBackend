@@ -32,6 +32,8 @@ async def get_friends(user_id: str) -> dict:
 
     friends = await collection.find_one({UserRef.ID: user_id})["friends"]
 
+    projection = {}
+
     return await collection.aggregate(
-        [{"$match": {UserRef.ID: {"$in": friends}}}, {"$project": {}}]
+        [{"$match": {UserRef.ID: {"$in": friends}}}, {"$project": projection}]
     )
