@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from typing import TYPE_CHECKING
 
 import config
-from modules.db import get_db
+from modules.db import MongoClient
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -73,6 +73,6 @@ _get_config()
 _import_routers()
 
 # TODO: MongoDB connection here.
-config.db = get_db(os.getenv("MONGODB_URI"))
+config.db = MongoClient(os.getenv("MONGODB_URI"))
 
 _log.info("App initialized")
