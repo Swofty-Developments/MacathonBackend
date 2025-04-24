@@ -35,7 +35,6 @@ async def read_users_me(
     return current_user.model_dump()
 
 
-# Do not mistaken this for sending a password reset email.
 @router.post("/users/account/reset-password")
 async def reset_password(
     is_authorised: Annotated[OAuth2PasswordRequestForm, Depends(require_api_key)],
