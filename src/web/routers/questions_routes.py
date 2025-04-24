@@ -1,9 +1,8 @@
 # Handle passing user token after validating password hash, password resets,
 # etc.
 
-import logging
-
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/questions",
@@ -30,6 +29,11 @@ QUESTIONS = [
 ]
 
 
+
+class QuestionDto(BaseModel):
+    id: int
+    questionText: str
+
 @router.get("/")
-async def get_questions() -> dict:
+async def get_questions() -> list[QuestionDto]:
     return QUESTIONS
