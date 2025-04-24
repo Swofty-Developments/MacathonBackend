@@ -7,12 +7,13 @@ import json
 from typing import Annotated
 
 from datetime import timedelta
-from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 import config
 from models.auth_models import TokenDto
 from models.user_models import UserDto
+from models.question_models import QuestionDto
 from modules.db import CollectionRef, UserRef
 from web.user_auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -39,19 +40,16 @@ async def read_users_me(
 
 @router.post("/register")
 async def register_user(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    questions: Annotated[str, Form(...)],
+    username: str, password: str, questions: list[QuestionDto]
 ) -> dict:
-    parsed_questions = json.loads(questions)
-
     user_collection = await config.db.get_collection(CollectionRef.USERS)
 
     user = UserDto(
         id=str(uuid.uuid4()),
         # Probably should add sanity checks for the inputs.
         points=0,
-        name=form_data.username,
-        questions=parsed_questions,
+        name=username,
+        questions=questions,
     )
 
     if await user_collection.find_one({UserRef.NAME: user.name}):
@@ -60,7 +58,7 @@ async def register_user(
             detail="User with the same name already exists",
         )
 
-    user.hashed_password = get_password_hash(form_data.password)
+    user.hashed_password = get_password_hash(password)
 
     await user_collection.insert_one(user.model_dump())
 
