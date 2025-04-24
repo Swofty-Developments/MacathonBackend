@@ -5,9 +5,7 @@ import logging
 import math
 
 from datetime import datetime, UTC
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from typing import Annotated
+from fastapi import APIRouter
 
 from typing import Optional
 from pydantic import BaseModel
@@ -15,21 +13,16 @@ from pydantic import BaseModel
 import config
 from modules.db import CollectionRef, LocationRef, UserRef
 
+from models.user_models import PublicUserDto
+
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
     tags=["users", "location"],
 )
 
-@router.post("/location/upload/")
-async def upload_location(user_id: int, latitude: float, longitude: float) -> dict:
-    collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    await collection.insert_one({ 
-        LocationRef.USER: user_id,
-        LocationRef.LATITUDE: latitude,
-        LocationRef.LONGITUDE: longitude,
-        LocationRef.CREATED: datetime.now(UTC)
-    })
-    return {"message": "Location uploaded"}
+class LocationUserDto(PublicUserDto):
+    latitude: float
+    longitude: float
 
 def haversine(point1, point2):
     (lat1, lon1) = point1
@@ -62,36 +55,47 @@ async def aggregate_locations() -> dict[tuple[float, float]]:
     locations = await collection.find({})
 
     location_table = {}
-    for doc in locations:
-        location_table[doc[LocationRef.USER]] = (doc[LocationRef.LATITUDE], doc[LocationRef.LONGITUDE])
+    for location in locations:
+        location_table[location[LocationRef.USER]] = (location[LocationRef.LATITUDE], location[LocationRef.LONGITUDE])
     
     return location_table
 
+@router.post("/location/upload/")
+async def upload_location(user_id: int, latitude: float, longitude: float) -> dict:
+    collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+    await collection.insert_one({ 
+        LocationRef.USER: user_id,
+        LocationRef.LATITUDE: latitude,
+        LocationRef.LONGITUDE: longitude,
+        LocationRef.CREATED: datetime.now(UTC)
+    })
+    return {"message": "Location uploaded"}
+
 @router.get("/location/radiusFetch")
-async def fetch_radius(user_id: int, radius: float):
+async def fetch_radius(user_id: int, radius: float) -> list[LocationUserDto]:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     user = await collection.find_one({ LocationRef.USER: user_id })
     user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
     location_table = await aggregate_locations()
 
-    valid_user_ids = []
+    valid_ids = []
     for table_id, table_coords in location_table.items():
         if user_id == table_id:
             continue
         distance = haversine(user_coords, table_coords)
         if (distance <= radius):
-            valid_user_ids.append(table_id)
+            valid_ids.append(table_id)
     
     projection = {}
 
     valid_users = await collection.aggregate(
-        [{"$match": {UserRef.ID: {"$in": valid_user_ids}}}, {"$project": projection}]
+        [{"$match": {UserRef.ID: {"$in": valid_ids}}}, {"$project": projection}]
     )
 
-    for user in valid_users:
-        valid_id = user[UserRef.ID]
+    for valid_user in valid_users:
+        valid_id = valid_user[UserRef.ID]
         (lat, lon) = location_table[valid_id]
-        user[LocationRef.LATITUDE] = lat
-        user[LocationRef.LONGITUDE] = lon
+        valid_user[LocationRef.LATITUDE] = lat
+        valid_user[LocationRef.LONGITUDE] = lon
     
     return valid_users
