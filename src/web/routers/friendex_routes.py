@@ -10,11 +10,12 @@ from modules.db import CollectionRef, UserRef
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
+    prefix="/friendex",
     tags=["users", "friendex"],
 )
 
 
-@router.get("/friendex/{user_id}")
+@router.get("/{user_id}")
 async def get_entry(user_id: str) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -25,7 +26,7 @@ async def get_entry(user_id: str) -> dict:
     return await collection.find_one(query, projection)
 
 
-@router.get("/friendex/friends/{user_id}")
+@router.get("/friends/{user_id}")
 async def get_friends(user_id: str) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 

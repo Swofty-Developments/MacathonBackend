@@ -12,6 +12,7 @@ from modules.db import CollectionRef, UserRef
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
+    prefix="/leaderboard",
     tags=["users", "leaderboard"],
 )
 
@@ -22,7 +23,7 @@ class LeaderboardUserDto(BaseModel):
     points: int
 
 
-@router.get("/leaderboard/{size}")
+@router.get("/{size}")
 async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -35,7 +36,7 @@ async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
     )
 
 
-@router.get("/leaderboard/rank/{user_id}")
+@router.get("/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
