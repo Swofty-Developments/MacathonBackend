@@ -14,7 +14,9 @@ class PublicUserDto(BaseModel):
     name: str
     points: int
     disabled: bool = False
-    questions: list[QuestionDto] = None
+    questions: list[QuestionDto]
+    friends: list[str]
+    selected_friend: Optional[str] = None
 
 
 class UserDto(PublicUserDto, DBRecord):

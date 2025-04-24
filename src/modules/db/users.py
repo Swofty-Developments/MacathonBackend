@@ -8,3 +8,5 @@ class UserRef(StrEnum):
     DISABLED = "disabled"
     POINTS = "points"
     QUESTIONS = "questions"
+    SELECTED_FRIEND = "selected_friend"
+    FRIENDS = "friends"
