@@ -2,7 +2,6 @@ import os
 import logging
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo.server_api import ServerApi
 
 # TODO: Implement a MongoDB connection here.
 
@@ -12,6 +11,7 @@ from .users import UserRef
 __all__ = ["get_db", "UserRef", "CollectionRef"]
 
 _log = logging.getLogger("uvicorn")
+
 
 class MongoClient:
     def __init__(self, uri):
