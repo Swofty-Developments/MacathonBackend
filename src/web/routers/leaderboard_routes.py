@@ -8,41 +8,49 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 
+from typing import Optional
+from pydantic import BaseModel
+
 import config
 from modules.db import CollectionRef, UserRef
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
-    tags=["users", "auth"],
+    tags=["users", "leaderboard"],
 )
 
-@router.get("/leaderboard/{limit}")
-async def get_leaderboard(limit : str) -> list[dict]:
+class LeaderboardUserDto(BaseModel):
+    id: Optional[str] = None
+    name: str
+    points: int
+
+@router.get("/leaderboard/{size}")
+async def get_leaderboard(size : str) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
     return collection.aggregate([
         {
             '$sort': {
-                'points': -1, 
-                'name': 1
+                UserRef.POINTS: -1, 
+                UserRef.NAME: 1
             }
         }, {
-            '$limit': int(limit)
+            '$limit': int(size)
         }, {
             '$project': {
-                'name': 1,
-                'points': 1
+                UserRef.NAME: 1,
+                UserRef.POINTS: 1
             }
         }
     ])
 
 @router.get("/leaderboard/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
-    points = await config.db.find_one({UserRef.ID: user_id})[points]
+    points = await config.db.find_one({UserRef.ID: user_id})[UserRef.POINTS]
     rank = await config.db.aggregate([
         {
             '$match': {
-                'points': {
+                UserRef.POINTS: {
                     '$lt': points
                 }
             }

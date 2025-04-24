@@ -13,7 +13,7 @@ from modules.db import CollectionRef, UserRef
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
-    tags=["users", "auth"],
+    tags=["users", "friendex"],
 )
 
 @router.get("/friendex/{user_id}")
