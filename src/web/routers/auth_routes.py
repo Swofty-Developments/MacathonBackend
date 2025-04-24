@@ -43,11 +43,11 @@ async def register_user(
     questions: Annotated[str, Form(...)],
 ) -> dict:
     parsed_questions = json.loads(questions)
-    
+
     user_collection = await config.db.get_collection(CollectionRef.USERS)
 
     user = UserDto(
-        id = str(uuid.uuid4()),
+        id=str(uuid.uuid4()),
         # Probably should add sanity checks for the inputs.
         name=form_data.username,
         questions=parsed_questions,
