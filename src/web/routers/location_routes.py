@@ -66,12 +66,19 @@ async def upload_location(
     longitude: float
 ) -> dict:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    await collection.insert_one({ 
+
+    query = { LocationRef.USER: user.id }
+
+    doc = { 
         LocationRef.USER: user.id,
         LocationRef.LATITUDE: latitude,
         LocationRef.LONGITUDE: longitude,
         LocationRef.CREATED: datetime.now(UTC)
-    })
+    }
+
+    options = { 'upsert': True }
+
+    await collection.replace_one(query, doc, options)
     return {"message": "Location uploaded"}
 
 @router.get("/location/radiusFetch")

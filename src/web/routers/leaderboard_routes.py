@@ -2,13 +2,15 @@
 # etc.
 
 import logging
-from typing import Optional
+from typing import Annotated, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 import config
+from models.user_models import UserDto
 from modules.db import CollectionRef, UserRef
+from web.auth.user_auth import get_current_active_user
 
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
@@ -51,10 +53,13 @@ async def get_rank(user_id: str) -> int:
     return await rank
 
 @router.post("/set")
-async def set_points(user_id: str, points: int):
+async def set_points(
+    user: Annotated[UserDto, Depends(get_current_active_user)],
+    points: int
+) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    query = { UserRef.ID: user_id }
+    query = { UserRef.ID: user.id }
 
     update = {
         '$set': {
