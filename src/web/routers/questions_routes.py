@@ -142,7 +142,11 @@ async def generate_mcq(
             detail="User not found",
         )
     
-    answer_seq = get_unique_answer_seq(user.id, other_user.id, user.points + other_user.points)
+    answer_seq = get_unique_answer_seq(
+        user.id,
+        other_user.id,
+        user.questions_answered + other_user.questions_answered
+    )
 
     # Generate prompts for Groq.
     groq_prompts = []
@@ -223,17 +227,23 @@ async def validate_mcq(
             detail="User not found",
         )
     
-    correct_answer_seq = get_unique_answer_seq(user.id, other_user.id, user.points + other_user.points)
+    correct_answer_seq = get_unique_answer_seq(
+        user.id,
+        other_user.id,
+        user.questions_answered + other_user.questions_answered
+    )
 
     correct_count = 0
     for answer, correct_answer in zip(answers, correct_answer_seq):
         if answer == correct_answer:
             correct_count += 1
+
+    user.questions_answered += 1
     
     user.points += correct_count
     await user_collection.update_one(
         {UserRef.ID: user.id},
-        {"$set": {UserRef.POINTS: user.points * POINTS_PER_QUESTION}},
+        {"$set": user.model_dump()},
     )
 
     return {"correctCount": correct_count, "pointsAwarded": correct_count * POINTS_PER_QUESTION}
