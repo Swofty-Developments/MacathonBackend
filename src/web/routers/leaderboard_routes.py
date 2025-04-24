@@ -59,10 +59,9 @@ async def set_points(
 ) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    query = { UserRef.ID: user.id }
-
-    update = {"$set": {UserRef.POINTS: points}}
-
-    await collection.update_one(query, update)
+    await collection.update_one(
+        {UserRef.ID: user.id},
+        {"$set": {UserRef.POINTS: points}}
+    )
 
     return {"message": "Set points successfully"}

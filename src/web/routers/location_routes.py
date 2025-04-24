@@ -76,19 +76,18 @@ async def upload_location(
     longitude: float,
 ) -> dict:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+
+    await collection.update_one(
+        {LocationRef.USER: user.id},
+        {"$set": { 
+            LocationRef.USER: user.id,
+            LocationRef.LATITUDE: latitude,
+            LocationRef.LONGITUDE: longitude,
+            LocationRef.CREATED: datetime.now(UTC)
+        }},
+        upsert=True
+    )
     
-    query = { LocationRef.USER: user.id }
-
-    doc = { 
-        LocationRef.USER: user.id,
-        LocationRef.LATITUDE: latitude,
-        LocationRef.LONGITUDE: longitude,
-        LocationRef.CREATED: datetime.now(UTC)
-    }
-
-    options = { 'upsert': True }
-
-    await collection.replace_one(query, doc, options)
     return {"message": "Location uploaded"}
 
 
