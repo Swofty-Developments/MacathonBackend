@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 app = FastAPI()
 config.app = app
 
-# app.add_middleware(ResponseWrapperMiddleware)
+app.add_middleware(ResponseWrapperMiddleware)
 
 _log = logging.getLogger("uvicorn")
 load_dotenv()
