@@ -27,7 +27,7 @@ class LeaderboardUserDto(BaseModel):
 async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    return collection.aggregate(
+    return await collection.aggregate(
         [
             {"$sort": {UserRef.POINTS: -1, UserRef.NAME: 1}},
             {"$limit": int(size)},
@@ -48,4 +48,4 @@ async def get_rank(user_id: str) -> int:
         + 1
     )
 
-    return rank
+    return await rank
