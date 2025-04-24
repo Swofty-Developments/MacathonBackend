@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import logging
 import os
@@ -12,6 +13,7 @@ from groq import AsyncGroq
 from typing import TYPE_CHECKING
 
 import config
+from modules.friendex.tracker import PlayersTracker
 from modules.db import MongoClient
 from web.middlewares.general import ResponseWrapperMiddleware
 
@@ -81,5 +83,9 @@ _import_routers()
 
 config.db = MongoClient(os.getenv("MONGODB_URI"))
 config.groq = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"), timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0))
+config.tracker = PlayersTracker()
 
-_log.info("App initialized")
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(config.tracker.start_loop())
+    _log.info("App initialized")

@@ -48,24 +48,34 @@ async def select_user(
 ) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
-    other_user = await users_collection.find_one({UserRef.ID: user_id})
+    other_user = UserDto.model_validate(await users_collection.find_one({UserRef.ID: user_id}))
     if not other_user:
         return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    elif user_id in user.friends:
+    elif other_user.id in user.friends:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already in friends list",
         )
-    elif user_id == user.id:
+    elif other_user.id == user.id:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot catch yourself",
         )
+    elif other_user.id in user.selected_friend:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already selected",
+        )
+    elif user.id in other_user.selected_friend:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already selected by the other user",
+        )
     
-    user.selected_friend = user_id
+    user.selected_friend = other_user.id
     await users_collection.update_one(
         {UserRef.ID: user.id},
         {"$set": user.model_dump()},
