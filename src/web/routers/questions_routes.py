@@ -19,6 +19,7 @@ router = APIRouter(
     tags=["users", "questions"],
 )
 
+POINTS_PER_QUESTION = 1
 GROQ_MCQ_QUERY = """
 You need to generate four multiple choice answers for the question {question}.
 The answer to the question is {answer}.
@@ -229,7 +230,7 @@ async def validate_mcq(
     user.points += correct_count
     await user_collection.update_one(
         {UserRef.ID: user.id},
-        {"$set": {UserRef.POINTS: user.points}},
+        {"$set": {UserRef.POINTS: user.points * POINTS_PER_QUESTION}},
     )
 
-    return {"correct_count": correct_count}
+    return {"correctCount": correct_count, "pointsAwarded": correct_count * POINTS_PER_QUESTION}
