@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 43800  # one month
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 def verify_password(plain_password: str | bytes, hashed_password: str | bytes) -> bool:
@@ -35,6 +35,10 @@ def get_password_hash(password: str | bytes) -> str:
 async def get_user(id: str) -> None | UserDto:
     user_collection = await config.db.get_collection(CollectionRef.USERS)
     user = await user_collection.find_one({UserRef.ID: id})
+    if user is None:
+        user = await user_collection.find_one({UserRef.NAME: id})
+    if user is None:
+        return None
 
     if user is not None:
         return UserDto.model_validate(user)
