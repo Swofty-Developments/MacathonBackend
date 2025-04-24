@@ -16,37 +16,39 @@ router = APIRouter(
     tags=["users", "auth"],
 )
 
-@router.get("/leaderboard")
-async def get_leaderboard() -> dict:
-    leaderboard_collection = await config.db.get_collection(CollectionRef.USERS)
+@router.get("/leaderboard/{limit}")
+async def get_leaderboard(limit : str) -> list[dict]:
+    collection = await config.db.get_collection(CollectionRef.USERS)
 
-    pipeline = [
+    return collection.aggregate([
         {
             '$sort': {
                 'points': -1, 
                 'name': 1
             }
         }, {
-            '$limit': 100
+            '$limit': int(limit)
+        }, {
+            '$project': {
+                'name': 1,
+                'points': 1
+            }
         }
-    ]
-
-    return leaderboard_collection.aggregate(pipeline)
+    ])
 
 @router.get("/leaderboard/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
-    user = await config.db.find_one({UserRef.ID: user_id})
-    points = user.points
-    agg = await config.db.aggregate([
+    points = await config.db.find_one({UserRef.ID: user_id})[points]
+    rank = await config.db.aggregate([
         {
             '$match': {
                 'points': {
-                    '$lt': 10
+                    '$lt': points
                 }
             }
         }, {
             '$count': 'index'
         }
-    ])['index']
+    ])['index'] + 1
 
-    return agg
+    return rank
