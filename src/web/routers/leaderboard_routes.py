@@ -2,13 +2,9 @@
 # etc.
 
 import logging
-
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from typing import Annotated
-
 from typing import Optional
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 import config
@@ -41,9 +37,11 @@ async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
 
 @router.get("/leaderboard/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
-    points = await config.db.find_one({UserRef.ID: user_id})[UserRef.POINTS]
+    collection = await config.db.get_collection(CollectionRef.USERS)
+
+    points = await collection.find_one({UserRef.ID: user_id})[UserRef.POINTS]
     rank = (
-        await config.db.aggregate(
+        await collection.aggregate(
             [{"$match": {UserRef.POINTS: {"$lt": points}}}, {"$count": "index"}]
         )["index"]
         + 1
