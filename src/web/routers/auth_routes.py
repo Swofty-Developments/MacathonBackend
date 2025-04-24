@@ -4,11 +4,11 @@
 import logging
 import uuid
 import json
+from typing import Annotated
 
 from datetime import timedelta
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from typing import Annotated
 
 import config
 from models.auth_models import TokenDto
