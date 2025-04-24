@@ -61,7 +61,7 @@ async def aggregate_locations() -> dict[tuple[float, float]]:
     return location_table
 
 @router.post("/location/upload/")
-async def upload_location(user_id: int, latitude: float, longitude: float) -> dict:
+async def upload_location(user_id: str, latitude: float, longitude: float) -> dict:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     await collection.insert_one({ 
         LocationRef.USER: user_id,
@@ -72,7 +72,7 @@ async def upload_location(user_id: int, latitude: float, longitude: float) -> di
     return {"message": "Location uploaded"}
 
 @router.get("/location/radiusFetch")
-async def fetch_radius(user_id: int, radius: float) -> list[LocationUserDto]:
+async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     user = await collection.find_one({ LocationRef.USER: user_id })
     user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])

@@ -24,7 +24,7 @@ class LeaderboardUserDto(BaseModel):
 
 
 @router.get("/{size}")
-async def get_leaderboard(size: str) -> list[LeaderboardUserDto]:
+async def get_leaderboard(size: int) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
     return await collection.aggregate(
@@ -49,3 +49,19 @@ async def get_rank(user_id: str) -> int:
     )
 
     return await rank
+
+@router.post("/set")
+async def set_points(user_id: str, points: int):
+    collection = await config.db.get_collection(CollectionRef.USERS)
+
+    query = { UserRef.ID: user_id }
+
+    update = {
+        '$set': {
+            UserRef.POINTS: points
+        }
+    }
+
+    await collection.update_one(query, update)
+
+    return {'message': 'set points successfully'}
