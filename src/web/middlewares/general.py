@@ -6,6 +6,9 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 class ResponseWrapperMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+        if request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+            return await call_next(request)
+        
         response: _StreamingResponse = await call_next(request)
 
         if request.url.path.startswith("/auth/login"):
