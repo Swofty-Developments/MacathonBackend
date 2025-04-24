@@ -1,6 +1,7 @@
 aiohttp==3.11.13
 bcrypt==4.0.1
 fastapi==0.115.11
+groq==0.23.0
 motor==3.7.0
 passlib==1.7.4
 pydantic==2.10.6

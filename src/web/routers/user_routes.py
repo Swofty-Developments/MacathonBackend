@@ -21,7 +21,7 @@ router = APIRouter(
 async def read_users_me(user_id: str) -> None | UserDto:
     collections = await config.db.get_collection(CollectionRef.USERS)
 
-    user: UserDto = await collections.find_one({UserRef.ID: user_id})
+    user = UserDto.model_validate(await collections.find_one({UserRef.ID: user_id}))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

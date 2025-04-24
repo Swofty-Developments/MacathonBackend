@@ -9,6 +9,7 @@ from modules.db import MongoClient
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
+    from groq import AsyncGroq
 
     from models.config_models import AppConfigDto
 
@@ -17,3 +18,4 @@ app: FastAPI = None
 app_config: AppConfigDto = None
 # TODO: Add MongoDB connection type hint below.
 db: MongoClient = None
+groq: AsyncGroq = None

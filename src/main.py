@@ -2,9 +2,11 @@ import importlib
 import logging
 import os
 import yaml
+import httpx
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from groq import AsyncGroq
 
 # from fastapi.middleware.cors import CORSMiddleware
 from typing import TYPE_CHECKING
@@ -77,7 +79,7 @@ _log.setLevel(logging.DEBUG)
 _get_config()
 _import_routers()
 
-# TODO: MongoDB connection here.
 config.db = MongoClient(os.getenv("MONGODB_URI"))
+config.groq = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"), timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0))
 
 _log.info("App initialized")
