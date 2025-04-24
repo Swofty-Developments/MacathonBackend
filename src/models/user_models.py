@@ -3,13 +3,19 @@
 
 from typing import Optional
 
+from pydantic import BaseModel
+
 from .generic import DBRecord
 from models.question_models import QuestionDto
 
 
-class UserDto(DBRecord):
+class PublicUserDto(BaseModel):
     id: Optional[str] = None
     name: str
-    hashed_password: Optional[str] = None
+    points: int
     disabled: bool = False
     questions: list[QuestionDto] = None
+
+
+class UserDto(DBRecord, PublicUserDto):
+    hashed_password: Optional[str] = None
