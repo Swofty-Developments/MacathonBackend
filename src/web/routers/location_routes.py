@@ -122,27 +122,3 @@ async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
         valid_user[LocationRef.LONGITUDE] = lon
 
     return valid_users
-
-CLASSROOM_LOCATIONS = [
-    {}
-]
-
-async def classroom_multiplier(
-        user_id: str
-) -> float:
-    user_location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    user = await user_location_collection.find_one({LocationRef.USER: user_id})
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User location not found, please upload location first",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
-    for location in CLASSROOM_LOCATIONS:
-        distance = haversine(user_coords, location["coords"])
-        if distance <= location["radius"]:
-            return 1.5
-    
-    return 1.0
