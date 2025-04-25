@@ -145,7 +145,7 @@ async def generate_mcq(
     answer_seq = get_unique_answer_seq(
         user.id,
         other_user.id,
-        user.questions_answered + other_user.questions_answered
+        user.questions_answered
     )
 
     # Generate prompts for Groq.
@@ -230,7 +230,7 @@ async def validate_mcq(
     correct_answer_seq = get_unique_answer_seq(
         user.id,
         other_user.id,
-        user.questions_answered + other_user.questions_answered
+        user.questions_answered
     )
 
     correct_count = 0
