@@ -90,6 +90,11 @@ async def delete_user(
     user_collection = await config.db.get_collection(CollectionRef.USERS)
     deleted = None
     if user.id:
+        query = { UserRef.SELECTED_FRIEND: user.id }
+        update = { '$set': {
+            UserRef.SELECTED_FRIEND: None
+        }}
+        await user_collection.update_one({ UserRef.SELECTED_FRIEND: user.id }, update )
         deleted = await user_collection.delete_one({UserRef.ID: user.id})
     else:
         raise HTTPException(
