@@ -31,7 +31,7 @@ def verify_password(plain_password: str | bytes, hashed_password: str | bytes) -
 def get_password_hash(password: str | bytes) -> str:
     return pwd_context.hash(password)
 
-
+# Return database entry for user given ID
 async def get_user(id: str) -> None | UserDto:
     user_collection = await config.db.get_collection(CollectionRef.USERS)
     user = await user_collection.find_one({UserRef.ID: id})
@@ -43,7 +43,7 @@ async def get_user(id: str) -> None | UserDto:
     if user is not None:
         return UserDto.model_validate(user)
 
-
+# Return database entry for user only if correct password is input
 async def authenticate_user(id: str, password: str) -> bool | UserDto:
     user = await get_user(id)
     if not user:
@@ -52,7 +52,7 @@ async def authenticate_user(id: str, password: str) -> bool | UserDto:
         return False
     return user
 
-
+# Create an access token that lasts for amount of time given by the timedelta object
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
@@ -64,7 +64,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-
+# Get user information corresponding to access token
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDto:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

@@ -17,7 +17,7 @@ router = APIRouter(
     tags=["users", "leaderboard"],
 )
 
-
+# Returns a list with 'size' entries sorted in descending order of points out of all users in the database
 @router.get("/")
 async def get_leaderboard(size: int) -> list[PublicUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
@@ -29,7 +29,8 @@ async def get_leaderboard(size: int) -> list[PublicUserDto]:
         ]
     ).to_list()]
 
-
+# Returns the rank (most points) of the user corresponding to 'user_id' compared with all other users
+# Rank = (# people with more points) + 1
 @router.get("/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
     collection = await config.db.get_collection(CollectionRef.USERS)
@@ -49,7 +50,7 @@ async def get_rank(user_id: str) -> int:
         return 1
     return entry[0]['index'] + 1
 
-
+# UNUSED: sets points of user, no longer referred to in code
 async def set_points(
     user: Annotated[UserDto, Depends(get_current_active_user)],
     points: int

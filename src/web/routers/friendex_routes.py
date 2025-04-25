@@ -19,7 +19,7 @@ router = APIRouter(
     tags=["users", "friendex"],
 )
 
-
+# Returns database entry for ID corresponding to user
 @router.get("/{user_id}")
 async def get_entry(user_id: str) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
@@ -38,7 +38,7 @@ async def get_entry(user_id: str) -> dict:
     
     return entry
 
-
+# Returns the list of IDs of friends of a user given their own ID
 @router.get("/friends/{user_id}")
 async def get_friends(user_id: str) -> list:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
@@ -53,7 +53,7 @@ async def get_friends(user_id: str) -> list:
 
     return await users_collection.find({UserRef.ID: {"$in": friends}}).to_list()
 
-
+# Returns information about current tracking session of authenticated user
 @router.get('/select/check')
 async def check_selected(
     user: Annotated[UserDto, Depends(get_current_active_user)]
@@ -77,7 +77,7 @@ async def check_selected(
         "pointsAccumulated": config.tracker.get_points_accumulated(user.id),
     }
 
-
+# Returns list of IDs of players not in friends list
 @router.get("/unmet-players/{user_id}")
 async def get_unmet_players(user_id: str) -> list:
     user_collection = await config.db.get_collection(CollectionRef.USERS)
@@ -97,6 +97,7 @@ async def get_unmet_players(user_id: str) -> list:
 
     return unmet
 
+# Allows selection of user for tracking (user_id is ID of user to track by authenticated user)
 @router.post("/select/{user_id}")
 async def select_user(
     user: Annotated[UserDto, Depends(get_current_active_user)],
@@ -147,6 +148,7 @@ async def select_user(
 
     return {}
 
+# Deselects the current selected user of the authenticated user
 @router.post("/deselect")
 async def deselect_user(
     user: Annotated[UserDto, Depends(get_current_active_user)],
@@ -155,6 +157,7 @@ async def deselect_user(
 
     return { 'message': 'Deselected user' }
 
+# Adds the given 'friend_id' to the friends list of the authenticated user
 @router.post('/add-friend')
 async def add_friend(
     user: Annotated[UserDto, Depends(get_current_active_user)],
