@@ -25,7 +25,7 @@ class LocationUserDto(PublicUserDto):
     longitude: float = -1
     is_occupied: bool = False
 
-
+# Returns distance between 2 (latitude, longitude) pairs in km
 def haversine(point1, point2) -> float:
     (lat1, lon1) = point1
     (lat2, lon2) = point2
@@ -55,7 +55,7 @@ def haversine(point1, point2) -> float:
 
     return distance
 
-
+# Returns dictionary of all recent locations of all active users
 async def aggregate_locations() -> dict[tuple[float, float]]:
     # collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     # locations = await collection.find({}).to_list()
@@ -73,7 +73,7 @@ async def aggregate_locations() -> dict[tuple[float, float]]:
 
     return location_table
 
-
+# Upload the location of authenticated user in terms of latitude and longitude to the server
 @router.post("/location/upload/")
 async def upload_location(
     user: Annotated[UserDto, Depends(get_current_active_user)],
@@ -97,7 +97,7 @@ async def upload_location(
 
     return {"message": "Location uploaded"}
 
-
+# Get all users within a 'radius' km distance to the most recent location of 'user_id'
 @router.get("/location/radius-fetch/{user_id}")
 async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
     # location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
