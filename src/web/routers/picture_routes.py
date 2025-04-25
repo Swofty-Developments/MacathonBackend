@@ -30,24 +30,20 @@ async def get_picture(user_id: str):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    picture_bytes : bytes = base64.b64encode(user[PictureRef.PICTURE]).decode('utf-8')
-    return {"image": f"data:image/png;base64,{picture_bytes}"}
+    # picture_bytes : bytes = base64.b64encode(user[PictureRef.PICTURE]).decode('utf-8')
+    # return {"image": f"data:image/png;base64,{picture_bytes}"}
+    
+    return { "image": user[PictureRef.PICTURE] }
 
 
 @router.post("/set_picture")
 async def set_picture(
     user: Annotated[UserDto, Depends(get_current_active_user)],
-    picture: UploadFile
+    picture: str
 ) -> dict:
     picture_collection = await config.db.get_collection(CollectionRef.PICTURES)
-    if picture.content_type != 'image/png':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please upload a PNG file",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
     query = { PictureRef.USER: user.id }
-    update = { "$set": { PictureRef.PICTURE: Binary(picture.file.read()) } }
+    update = { "$set": { PictureRef.PICTURE: picture } }
 
     await picture_collection.update_one(query, update, upsert=True)
 
