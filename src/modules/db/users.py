@@ -10,3 +10,4 @@ class UserRef(StrEnum):
     QUESTIONS = "questions"
     SELECTED_FRIEND = "selected_friend"
     FRIENDS = "friends"
+    ACHIEVEMENTS = "achievements"
