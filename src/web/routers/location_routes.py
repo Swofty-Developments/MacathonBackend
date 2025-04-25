@@ -88,6 +88,8 @@ async def upload_location(
         upsert=True
     )
 
+    config.tracker.update_location(user.id, latitude, longitude)
+
     return {"message": "Location uploaded"}
 
 

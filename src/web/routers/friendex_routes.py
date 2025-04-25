@@ -95,12 +95,12 @@ async def select_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot catch yourself",
         )
-    elif other_user.id in user.selected_friend:
+    elif other_user.id == user.selected_friend:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected",
         )
-    elif user.id in other_user.selected_friend:
+    elif user.id == other_user.selected_friend:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected by the other user",
@@ -111,6 +111,8 @@ async def select_user(
         {UserRef.ID: user.id},
         {"$set": user.model_dump()},
     )
+
+    config.tracker.add_tracking(user.id, other_user.id)
 
     return {}
 
@@ -127,7 +129,7 @@ async def add_friend(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    friends = entry["friends"]
+    friends = entry.get("friends", [])
 
     if friend_id == user.id:
         raise HTTPException(
