@@ -23,6 +23,7 @@ class LocationUserDto(PublicUserDto):
     id: str
     latitude: float = -1
     longitude: float = -1
+    is_occupied: bool = False
 
 
 def haversine(point1, point2) -> float:
@@ -133,5 +134,6 @@ async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
         (lat, lon) = location_table[valid_user.id]
         valid_user.latitude = lat
         valid_user.longitude = lon
+        valid_user.is_occupied = True if config.tracker.get_player_tracking(valid_user.id) else False
 
     return valid_users
