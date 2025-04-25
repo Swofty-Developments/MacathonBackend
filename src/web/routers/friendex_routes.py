@@ -53,6 +53,18 @@ async def get_friends(user_id: str) -> list:
 
     return await users_collection.find({UserRef.ID: {"$in": friends}}).to_list()
 
+
+@router.get('/select/check')
+async def check_selected(
+    user: Annotated[UserDto, Depends(get_current_active_user)]
+) -> dict:
+    return {
+        "selectedFriend": user.selected_friend,
+        "timeRemaining": config.tracker.get_selected_time_remaining(user.id),
+        "pointsAccumulated": config.tracker.get_points_accumulated(user.id),
+    }
+
+
 @router.get("/unmet-players/{user_id}")
 async def get_unmet_players(user_id: str) -> list:
     user_collection = await config.db.get_collection(CollectionRef.USERS)
@@ -116,7 +128,7 @@ async def select_user(
 
     return {}
 
-@router.post('/addfriend')
+@router.post('/add-friend')
 async def add_friend(
     user: Annotated[UserDto, Depends(get_current_active_user)],
     friend_id: str
