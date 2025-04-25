@@ -26,20 +26,34 @@ async def get_entry(user_id: str) -> dict:
 
     projection = {}
 
-    return await users_collection.find_one(query, projection)
+    entry = await users_collection.find_one(query, projection)
+
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    return entry
 
 
 @router.get("/friends/{user_id}")
-async def get_friends(user_id: str) -> dict:
+async def get_friends(user_id: str) -> list:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
-    friends = await users_collection.find_one({UserRef.ID: user_id})["friends"]
+    user = UserDto.model_validate(await users_collection.find_one({UserRef.ID: user_id}))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    friends = user.friends
 
     projection = {}
 
     return await users_collection.aggregate(
-        [{"$match": {UserRef.ID: {"$in": friends}}}, {"$project": projection}]
-    )
+        [{"$match": {UserRef.ID: {"$in": friends}}}]
+    ).to_list()
 
 @router.post("/select/{user_id}")
 async def select_user(
@@ -82,3 +96,39 @@ async def select_user(
     )
 
     return {}
+
+@router.post('/addfriend')
+async def add_friend(
+    user: Annotated[UserDto, Depends(get_current_active_user)],
+    friend_id: str
+) -> dict:
+    users_collection = await config.db.get_collection(CollectionRef.USERS)
+
+    friends = await users_collection.find_one({UserRef.ID: user.id})["friends"]
+
+    if friend_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot friend yourself",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if friend_id in friends:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Already in friends list",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not await users_collection.find_one({UserRef.ID: friend_id}):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid friend ID",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    friends.append(friend_id)
+
+    await users_collection.update_one(
+        {UserRef.ID: user.id},
+        {"$set": {UserRef.FRIENDS: friends}},
+    )

@@ -10,13 +10,13 @@ from models.question_models import QuestionDto
 
 
 class PublicUserDto(BaseModel):
-    id: Optional[str] = None
+    _id: Optional[str] = None
     name: str
     points: int
-    questions_answered: int
+    questions_answered: int = 0
     disabled: bool = False
     questions: list[QuestionDto]
-    friends: list[str]
+    friends: list[str] = []
     selected_friend: Optional[str] = None
 
 
