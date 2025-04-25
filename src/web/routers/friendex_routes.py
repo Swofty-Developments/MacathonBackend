@@ -33,7 +33,7 @@ async def get_entry(user_id: str) -> dict:
     if not entry:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     
     return entry
@@ -47,7 +47,7 @@ async def get_friends(user_id: str) -> list:
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     friends = user.friends
 
@@ -86,7 +86,7 @@ async def get_unmet_players(user_id: str) -> list:
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     friend_ids = user.get("friends", [])
     excluded_ids = friend_ids + [user_id]
@@ -108,7 +108,7 @@ async def select_user(
     if not other_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     elif other_user.id in user.friends:
         raise HTTPException(
@@ -166,7 +166,7 @@ async def add_friend(
     if not entry:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user.id} not found",
         )
     friends = entry.get("friends", [])
 

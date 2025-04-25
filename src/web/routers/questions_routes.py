@@ -140,7 +140,7 @@ async def generate_mcq(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     
     answer_seq = get_unique_answer_seq(
@@ -225,7 +225,7 @@ async def validate_mcq(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
         )
     
     correct_answer_seq = get_unique_answer_seq(

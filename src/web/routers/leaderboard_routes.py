@@ -39,7 +39,8 @@ async def get_rank(user_id: str) -> int:
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=f"User with ID {user_id} not found",
+
         )
     points = user[UserRef.POINTS]
 
