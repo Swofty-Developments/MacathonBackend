@@ -130,7 +130,13 @@ async def select_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected by the other user",
         )
+    elif config.tracker.get_player_tracking(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already selected by another user",
+        )
     
+    await config.tracker.remove_tracking(user.id)
     user.selected_friend = other_user.id
     await users_collection.update_one(
         {UserRef.ID: user.id},
