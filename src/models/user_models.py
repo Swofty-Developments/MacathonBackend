@@ -2,8 +2,7 @@
 # e.g. The user itself, maybe user settings (if separated) etc.
 
 from typing import Optional
-
-from pydantic import BaseModel
+from datetime import datetime
 
 from .generic import DBRecord
 from models.question_models import QuestionDto
@@ -20,6 +19,7 @@ class PublicUserDto(DBRecord):
     friends: list[str] = []
     selected_friend: Optional[str] = None
     achievements: list[AchievementDto] = []
+    previous_question_answered_at: datetime = None
 
 
 class UserDto(PublicUserDto):

@@ -1,6 +1,7 @@
 # Handle passing user token after validating password hash, password resets,
 # etc.
 import asyncio
+from datetime import datetime, timezone
 import random
 import json
 from typing import Annotated
@@ -239,8 +240,20 @@ async def validate_mcq(
             correct_count += 1
 
     user.questions_answered += 1
-    
     user.points += correct_count
+
+    if other_user.previous_question_answered_at:
+        if correct_count == 3 and (datetime.now(timezone.utc) - other_user.previous_question_answered_at).total_seconds() < 60 * 10:
+            user.friends.append(other_user.id)
+            other_user.friends.append(user.id)
+            await user_collection.update_one(
+                {UserRef.ID: other_user.id},
+                {"$set": other_user.model_dump()},
+            )
+
+    if correct_count == 3:
+        user.previous_question_answered_at = datetime.now(timezone.utc)
+
     await user_collection.update_one(
         {UserRef.ID: user.id},
         {"$set": user.model_dump()},
