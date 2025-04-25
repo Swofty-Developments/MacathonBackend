@@ -127,7 +127,7 @@ async def add_friend(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    friends = entry["friends"]
+    friends = entry.get("friends", [])
 
     if friend_id == user.id:
         raise HTTPException(
