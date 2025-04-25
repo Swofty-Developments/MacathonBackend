@@ -113,9 +113,7 @@ class PlayersTracker():
     def remove_tracking(self, id_1: str) -> None:
         self.currently_tracking.pop(id_1)
     
-    async def classroom_multiplier(
-        user_id: str
-    ) -> float:
+    async def classroom_multiplier(self, user_id: str) -> float:
         user_location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
         user = await user_location_collection.find_one({LocationRef.USER: user_id})
 

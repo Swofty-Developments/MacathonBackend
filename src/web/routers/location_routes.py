@@ -21,10 +21,10 @@ router = APIRouter(
 )
 
 
-class LocationUserDto(BaseModel):
+class LocationUserDto(PublicUserDto):
     id: str
-    latitude: float
-    longitude: float
+    latitude: float = -1
+    longitude: float = -1
 
 
 def haversine(point1, point2) -> float:
@@ -128,19 +128,12 @@ async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
         if distance <= radius:
             valid_ids.append(table_id)
 
-    # user_collection = await config.db.get_collection(CollectionRef.USERS)
-    # valid_users = await user_collection.find({UserRef.ID: {"$in": valid_ids}}).to_list()
+    user_collection = await config.db.get_collection(CollectionRef.USERS)
+    valid_users = [LocationUserDto.model_validate(data) for data in await user_collection.find({UserRef.ID: {"$in": valid_ids}}).to_list()]
 
-    # for valid_user in valid_users:
-    #     valid_id = valid_user[UserRef.ID]
-    #     (lat, lon) = location_table[valid_id]
-    #     valid_user[LocationRef.LATITUDE] = lat
-    #     valid_user[LocationRef.LONGITUDE] = lon
-
-    valid_users = [
-        LocationUserDto(id=id, latitude=lat, longitude=long)
-        for id, (lat, long) in location_table.items()
-        if id in valid_ids
-    ]
+    for valid_user in valid_users:
+        (lat, lon) = location_table[valid_user.id]
+        valid_user.latitude = lat
+        valid_user.longitude = lon
 
     return valid_users
