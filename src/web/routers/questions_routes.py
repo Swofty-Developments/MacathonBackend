@@ -137,7 +137,7 @@ async def generate_mcq(
     other_user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: user_id}))
     
     if not user:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
@@ -222,7 +222,7 @@ async def validate_mcq(
     other_user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: user_id}))
     
     if not user:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
