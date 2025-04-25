@@ -1,9 +1,7 @@
 from typing import override, Self
 from pydantic import BaseModel
 
-__all__ = [
-    "DBRecord",
-]
+__all__ = [ "DBRecord" ]
 
 
 class DBRecord(BaseModel):
