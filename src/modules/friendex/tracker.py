@@ -40,8 +40,6 @@ class PlayersTracker():
 
     async def on_tick(self) -> None:
         # Give points and shit here
-        print(self.locations)
-        print(self.currently_tracking)
         await self.cleanup()
         
         for tracking in self.currently_tracking:
