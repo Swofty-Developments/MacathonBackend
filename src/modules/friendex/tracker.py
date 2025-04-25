@@ -1,6 +1,14 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
+
+import config
+from modules.db import CollectionRef, UserRef
+from models.user_models import UserDto
+
+
+LOCATION_TTL = 30
+TRACKING_TTL = 60 * 20
 
 
 class PlayersTracker():
@@ -10,8 +18,33 @@ class PlayersTracker():
 
     async def on_tick(self) -> None:
         # Give points and shit here
-        print(self.locations)
+
+        self.cleanup()
         ...
+
+    async def cleanup(self) -> None:
+        user_collection = await config.db.get_collection(CollectionRef.USERS)
+
+        ids_to_remove = []
+        for id, location in self.locations.items():
+            lat, long, ttl = location
+            if datetime.now(timezone.utc) - ttl > timedelta(seconds=LOCATION_TTL):
+                ids_to_remove.append(id)
+        [self.locations.pop(id, None) for id in ids_to_remove]
+        
+        ids_to_remove = []
+        for id, player in self.currently_tracking.items():
+            other_id, ttl = player
+            if datetime.now(timezone.utc) - ttl > timedelta(seconds=TRACKING_TTL):
+                user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: id}))
+                user.selected_friend = None
+                await user_collection.update_one(
+                    {UserRef.ID: user.id},
+                    {"$set": user.model_dump()},
+                )
+
+                ids_to_remove.append(id)
+        [self.currently_tracking.pop(id, None) for id in ids_to_remove]
     
     async def start_loop(self) -> None:
         while True:
