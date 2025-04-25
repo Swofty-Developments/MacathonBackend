@@ -23,8 +23,68 @@ class PlayersTracker():
 
     async def on_tick(self) -> None:
         # Give points and shit here
-        # print(self.locations)
-        ...
+        await self.cleanup()
+        
+        for id_1, tracking in self.currently_tracking.items():
+            id_2, _ = tracking
+
+            if id_1 not in self.locations.keys():
+                return
+            elif id_2 not in self.locations.keys():
+                return
+
+            lat_1, long_1, _ = self.locations[id_1]
+            lat_2, long_2, _ = self.locations[id_2]
+
+            if id_1 == id_2:
+                continue
+
+            distance = haversine((lat_1, long_1), (lat_2, long_2))
+
+            if distance <= MAX_DISTANCE:
+                multiplier_1 = self.classroom_multiplier(id_1)
+                multiplier_2 = self.classroom_multiplier(id_2)
+
+                await self.give_points(id_1, multiplier_1)
+                await self.give_points(id_2, multiplier_2)
+
+    async def give_points(self, user_id: str, multiplier: float) -> None:
+        user_collection = await config.db.get_collection(CollectionRef.USERS)
+        user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: user_id}))
+
+        points = 1 * multiplier
+        user.points += points
+
+        await user_collection.update_one(
+            {UserRef.ID: user.id},
+            {"$set": user.model_dump()}
+        )
+
+        return {"message": f"Awarded {points} points to {user.id} with multiplier {multiplier}"}
+        
+
+    async def cleanup(self) -> None:
+        user_collection = await config.db.get_collection(CollectionRef.USERS)
+
+        ids_to_remove = []
+        for id, location in self.locations.items():
+            lat, long, ttl = location
+            if datetime.now(timezone.utc) - ttl > timedelta(seconds=LOCATION_TTL):
+                ids_to_remove.append(id)
+        [self.locations.pop(id, None) for id in ids_to_remove]
+        
+        for id, player in self.currently_tracking.items():
+            other_id, ttl = player
+            if datetime.now(timezone.utc) - ttl > timedelta(seconds=TRACKING_TTL):
+                user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: id}))
+                user.selected_friend = None
+                await user_collection.update_one(
+                    {UserRef.ID: user.id},
+                    {"$set": user.model_dump()},
+                )
+
+                ids_to_remove.append(id)
+        [self.currently_tracking.pop(id, None) for id in ids_to_remove]
     
     async def start_loop(self) -> None:
         while True:
