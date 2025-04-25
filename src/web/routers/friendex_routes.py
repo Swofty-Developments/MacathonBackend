@@ -73,7 +73,7 @@ async def check_selected(
         "isInitiator": True if is_initiator else False,
         "timeRemaining": remaining,
         "elapsedTime": elapsed,
-        "questionsReady": True if remaining <= 0 else False,
+        "questionsReady": True if remaining <= 5 else False,
         "pointsAccumulated": config.tracker.get_points_accumulated(user.id),
     }
 
