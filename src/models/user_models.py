@@ -19,7 +19,7 @@ class PublicUserDto(DBRecord):
     friends: list[str] = []
     selected_friend: Optional[str] = None
     achievements: list[AchievementDto] = []
-    previous_question_answered_at: datetime = None
+    previous_question_answered_at: None | datetime = None
 
 
 class UserDto(PublicUserDto):

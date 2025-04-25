@@ -10,7 +10,7 @@ from modules.friendex import locations
 from web.routers.location_routes import haversine
 
 
-LOCATION_TTL = 30
+LOCATION_TTL = 60 * 60 # 30
 TRACKING_TTL = 60 * 20
 
 MAX_DISTANCE = 0.008 # 8 meters
@@ -159,11 +159,13 @@ class PlayersTracker():
 
     async def remove_tracking(self, id: str) -> None:
         for tracking in self.currently_tracking:
+            print(tracking.id_1, tracking.id_2, id)
             if tracking.id_1 == id or tracking.id_2 == id:
                 user_collection = await config.db.get_collection(CollectionRef.USERS)
 
                 user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: tracking.id_1}))
                 user.selected_friend = None
+                print(user)
                 await user_collection.update_one(
                     {UserRef.ID: user.id},
                     {"$set": user.model_dump()},
