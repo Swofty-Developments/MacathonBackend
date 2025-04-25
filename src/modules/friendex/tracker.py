@@ -14,6 +14,8 @@ from fastapi import HTTPException, status
 LOCATION_TTL = 30
 TRACKING_TTL = 60 * 20
 
+MAX_DISTANCE = 0.008 # 8 meters
+
 
 class PlayersTracker():
     locations: dict[str, tuple[float, float, datetime]] = {}
@@ -23,23 +25,29 @@ class PlayersTracker():
     async def on_tick(self) -> None:
         # Give points and shit here
         await self.cleanup()
-        for id_1, locations_1 in self.locations.items():
-            print(id_1, locations_1)
-            lat_1, long_1, _ = locations_1
-            for id_2, locations_2 in self.locations.items():
-                print(id_2, locations_2)
-                if id_1 == id_2:
-                    continue
+        
+        for id_1, tracking in self.currently_tracking.items():
+            id_2, _ = tracking
 
-                lat_2, long_2, _ = locations_2
-                distance = haversine((lat_1, long_1), (lat_2, long_2))
+            if id_1 not in self.locations.keys():
+                return
+            elif id_2 not in self.locations.keys():
+                return
 
-                if distance <= 0.008:
-                    multiplier_1 = await self.classroom_multiplier(id_1)
-                    multiplier_2 = await self.classroom_multiplier(id_2)
+            lat_1, long_1, _ = self.locations[id_1]
+            lat_2, long_2, _ = self.locations[id_2]
 
-                    await self.give_points(id_1, multiplier_1)
-                    await self.give_points(id_2, multiplier_2)
+            if id_1 == id_2:
+                continue
+
+            distance = haversine((lat_1, long_1), (lat_2, long_2))
+
+            if distance <= MAX_DISTANCE:
+                multiplier_1 = await self.classroom_multiplier(id_1)
+                multiplier_2 = await self.classroom_multiplier(id_2)
+
+                await self.give_points(id_1, multiplier_1)
+                await self.give_points(id_2, multiplier_2)
 
     async def give_points(self, user_id: str, multiplier: float) -> None:
         user_collection = await config.db.get_collection(CollectionRef.USERS)
@@ -86,8 +94,8 @@ class PlayersTracker():
 
     async def populate(self) -> None:
         user_collection = await config.db.get_collection(CollectionRef.USERS)
+        
         users = [UserDto.model_validate(user) for user in await user_collection.find({UserRef.SELECTED_FRIEND: {"$ne": None}}).to_list(length=None)]
-
         for user in users:
             self.add_tracking(user.id, user.selected_friend)
 
