@@ -26,11 +26,18 @@ ACHIEVEMENTS = [
 @router.get("/{user_id}")
 async def get_achievements(user_id: str) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
-    user = await collection.find_one({UserRef.ID: user_id})
+    
+    result = await collection.aggregate(
+        [
+        {"$match": {UserRef.ID: user_id}},
+        {"$project": {UserRef.ACHIEVEMENTS: 1}},
+        ]
+    ).to_list()
 
-    if not user:
+    if not result:
         return {"achievements": []}
-    return {"achievements": user.get(UserRef.ACHIEVEMENTS, [])}
+
+    return {"achievements": result[0].get(UserRef.ACHIEVEMENTS, [])}
 
 async def update_achievements(
     user_id: str
