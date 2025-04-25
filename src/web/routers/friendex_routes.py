@@ -116,6 +116,21 @@ async def select_user(
 
     return {}
 
+@router.post("/deselect")
+async def deselect_user(
+    user: Annotated[UserDto, Depends(get_current_active_user)],
+) -> dict:
+    users_collection = await config.db.get_collection(CollectionRef.USERS)
+
+    await users_collection.update_one(
+        {UserRef.SELECTED_FRIEND: user.id},
+        {"$set": { 
+            UserRef.ID: None
+        }}
+    )
+
+    return { 'message': 'Deselected user' }
+
 @router.post('/addfriend')
 async def add_friend(
     user: Annotated[UserDto, Depends(get_current_active_user)],
