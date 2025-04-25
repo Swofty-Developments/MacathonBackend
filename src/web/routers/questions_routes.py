@@ -243,7 +243,7 @@ async def validate_mcq(
     user.points += correct_count
 
     if other_user.previous_question_answered_at:
-        if correct_count == 3 and (datetime.now(timezone.utc) - other_user.previous_question_answered_at).total_seconds() < 60 * 10:
+        if correct_count == 3 and (datetime.now(timezone.utc) - other_user.previous_question_answered_at.replace(tzinfo=timezone.utc)).total_seconds() < 60 * 10:
             user.friends.append(other_user.id)
             other_user.friends.append(user.id)
             await user_collection.update_one(
