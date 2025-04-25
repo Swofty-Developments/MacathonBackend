@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 import config
-from models.user_models import UserDto
+from models.user_models import PublicUserDto, UserDto
 from modules.db import CollectionRef, UserRef
 from web.auth.user_auth import get_current_active_user
 
@@ -26,14 +26,13 @@ class LeaderboardUserDto(BaseModel):
 
 
 @router.get("/")
-async def get_leaderboard(size: int) -> list[LeaderboardUserDto]:
+async def get_leaderboard(size: int) -> list[PublicUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
     return await collection.aggregate(
         [
             {"$sort": {UserRef.POINTS: -1, UserRef.NAME: 1}},
             {"$limit": int(size)},
-            {"$project": {UserRef.ID: 1, UserRef.NAME: 1, UserRef.POINTS: 1}},
         ]
     ).to_list()
 
