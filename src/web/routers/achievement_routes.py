@@ -43,8 +43,12 @@ async def update_achievements(
     points = user.get("points", 0)
 
     new_achievements = []
-    for title, desc, points, min in ACHIEVEMENTS:
-        if count>= min and title not in current_achievements:
+    for achievement in ACHIEVEMENTS:
+        title = achievement['title']
+        desc = achievement['description']
+        points = achievement['points']
+        min_friends = achievement['min_friends']
+        if count>= int(min_friends) and title not in current_achievements:
             new_achievements.append({
                 "title": title, 
                 "description": desc, 
