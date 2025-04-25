@@ -46,7 +46,6 @@ async def register_user(
     user = UserDto(
         id=str(uuid.uuid4()),
         # Probably should add sanity checks for the inputs.
-        points=0,
         name=username,
         questions=questions,
     )

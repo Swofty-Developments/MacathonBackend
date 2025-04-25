@@ -13,11 +13,11 @@ from models.achievement_models import AchievementDto
 class PublicUserDto(DBRecord):
     id: Optional[str] = None
     name: str
-    points: int
-    questions_answered: int
+    points: int = 0
+    questions_answered: int = 0
     disabled: bool = False
     questions: list[QuestionDto]
-    friends: list[str]
+    friends: list[str] = []
     selected_friend: Optional[str] = None
     achievements: list[AchievementDto] = []
 
