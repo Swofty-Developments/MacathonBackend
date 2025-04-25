@@ -5,7 +5,6 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 
 import config
 from models.user_models import PublicUserDto, UserDto

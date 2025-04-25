@@ -73,7 +73,7 @@ async def check_selected(
         "isInitiator": True if is_initiator else False,
         "timeRemaining": remaining,
         "elapsedTime": elapsed,
-        "questionsReady": True if remaining <= 0 else False,
+        "questionsReady": True if remaining <= 5 else False,
         "pointsAccumulated": config.tracker.get_points_accumulated(user.id),
     }
 
@@ -165,13 +165,12 @@ async def add_friend(
 ) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
-    entry = await users_collection.find_one({UserRef.ID: user.id})
-    if not entry:
+    friend = UserDto.model_validate(await users_collection.find_one({UserRef.ID: friend_id}))
+    if not friend:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with ID {user.id} not found",
+            detail=f"User with ID {friend.id} not found",
         )
-    friends = entry.get("friends", [])
 
     if friend_id == user.id:
         raise HTTPException(
@@ -179,26 +178,26 @@ async def add_friend(
             detail="Cannot friend yourself",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if friend_id in friends:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Already in friends list",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    if not await users_collection.find_one({UserRef.ID: friend_id}):
+    elif not await users_collection.find_one({UserRef.ID: friend_id}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid friend ID",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    friends.append(friend_id)
-
-    await users_collection.update_one(
-        {UserRef.ID: user.id},
-        {"$set": {UserRef.FRIENDS: friends}},
-    )
+    
+    if friend_id not in user.friends:
+        user.friends.append(friend_id)
+        await users_collection.update_one(
+            {UserRef.ID: user.id},
+            {"$set": {UserRef.FRIENDS: user.friends}},
+        )
+        
+    if user.id not in friend.friends:
+        friend.friends.append(user.id)
+        await users_collection.update_one(
+            {UserRef.ID: friend.id},
+            {"$set": {UserRef.FRIENDS: friend.friends}},
+        )
 
     await update_achievements(user.id)
 
