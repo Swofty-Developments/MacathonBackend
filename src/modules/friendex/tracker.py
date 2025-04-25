@@ -1,12 +1,25 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
+
+import config
+from modules.db import CollectionRef, UserRef
+from models.user_models import UserDto
+
+from modules.friendex import locations
+from web.routers.location_routes import haversine
+
+
+LOCATION_TTL = 30
+TRACKING_TTL = 60 * 20
+
+MAX_DISTANCE = 0.008 # 8 meters
 
 
 class PlayersTracker():
     locations: dict[str, tuple[float, float, datetime]] = {}
     # First and second UUID is user A and B respectively, where A is the one who has selected B.
-    currently_tracking: dict[str, dict[str, datetime]] = defaultdict(dict)
+    currently_tracking: dict[str, tuple[str, datetime]] = defaultdict(dict)
 
     async def on_tick(self) -> None:
         # Give points and shit here
@@ -16,7 +29,14 @@ class PlayersTracker():
     async def start_loop(self) -> None:
         while True:
             await self.on_tick()
-            await asyncio.sleep(1) # Adjust frequency as needed.
+            await asyncio.sleep(5) # Adjust frequency as needed.
+
+    async def populate(self) -> None:
+        user_collection = await config.db.get_collection(CollectionRef.USERS)
+        
+        users = [UserDto.model_validate(user) for user in await user_collection.find({UserRef.SELECTED_FRIEND: {"$ne": None}}).to_list(length=None)]
+        for user in users:
+            self.add_tracking(user.id, user.selected_friend)
 
     def update_location(self, id: str, lat: float, long: float) -> None:
         self.locations[id] = (lat, long, datetime.now(timezone.utc))
@@ -26,10 +46,20 @@ class PlayersTracker():
     
     def add_tracking(self, id_1: str, id_2: str) -> None:
         # Have ttl logic for tracking whilst rewarding points
-        self.currently_tracking[id_1][id_2] = datetime.now(timezone.utc)
+        self.currently_tracking[id_1] = (id_2, datetime.now(timezone.utc))
+        ...
+
+    def remove_tracking(self, id_1: str) -> None:
+        self.currently_tracking.pop(id_1)
     
-    def remove_tracking(self, id_1: str, id_2: str = None) -> None:
-        if id_2 is None:
-            self.currently_tracking.pop(id_1)
-        else:
-            self.currently_tracking[id_1].pop(id_2, None)
+    def classroom_multiplier(self, user_id: str) -> int:
+        user_location_collection = self.locations.get(user_id)
+        lat, long, _ = user_location_collection
+
+        user_coords = (lat, long)
+        for location in locations.CLASSROOM_LOCATIONS:
+            distance = haversine(user_coords, location["coords"])
+            if distance <= location["radius"]/1000:
+                return 2
+    
+        return 1

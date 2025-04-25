@@ -87,5 +87,6 @@ config.tracker = PlayersTracker()
 
 @app.on_event("startup")
 async def startup_event():
+    await config.tracker.populate()
     asyncio.create_task(config.tracker.start_loop())
     _log.info("App initialized")

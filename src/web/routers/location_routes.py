@@ -5,13 +5,12 @@ import logging
 import math
 from typing import Annotated
 
-from datetime import datetime, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import config
 from models.user_models import UserDto
 from models.user_models import PublicUserDto
-from modules.db import CollectionRef, LocationRef, UserRef
+from modules.db import CollectionRef, UserRef
 from web.auth.user_auth import get_current_active_user
 
 _log = logging.getLogger("uvicorn")
@@ -21,8 +20,9 @@ router = APIRouter(
 
 
 class LocationUserDto(PublicUserDto):
-    latitude: float
-    longitude: float
+    id: str
+    latitude: float = -1
+    longitude: float = -1
 
 
 def haversine(point1, point2) -> float:
@@ -56,15 +56,19 @@ def haversine(point1, point2) -> float:
 
 
 async def aggregate_locations() -> dict[tuple[float, float]]:
-    collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    locations = await collection.find({}).to_list()
+    # collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+    # locations = await collection.find({}).to_list()
+
+    # location_table = {}
+    # for location in locations:
+    #     location_table[location[LocationRef.USER]] = (
+    #         location[LocationRef.LATITUDE],
+    #         location[LocationRef.LONGITUDE],
+    #     )
 
     location_table = {}
-    for location in locations:
-        location_table[location[LocationRef.USER]] = (
-            location[LocationRef.LATITUDE],
-            location[LocationRef.LONGITUDE],
-        )
+    for user_id, (lat, long, _) in config.tracker.locations.items():
+        location_table[user_id] = (lat, long)
 
     return location_table
 
@@ -75,18 +79,18 @@ async def upload_location(
     latitude: float,
     longitude: float,
 ) -> dict:
-    collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+    # collection = await config.db.get_collection(CollectionRef.LOCATIONS)
 
-    await collection.update_one(
-        {LocationRef.USER: user.id},
-        {"$set": { 
-            LocationRef.USER: user.id,
-            LocationRef.LATITUDE: latitude,
-            LocationRef.LONGITUDE: longitude,
-            LocationRef.CREATED: datetime.now(UTC)
-        }},
-        upsert=True
-    )
+    # await collection.update_one(
+    #     {LocationRef.USER: user.id},
+    #     {"$set": { 
+    #         LocationRef.USER: user.id,
+    #         LocationRef.LATITUDE: latitude,
+    #         LocationRef.LONGITUDE: longitude,
+    #         LocationRef.CREATED: datetime.now(UTC)
+    #     }},
+    #     upsert=True
+    # )
 
     config.tracker.update_location(user.id, latitude, longitude)
 
@@ -95,56 +99,39 @@ async def upload_location(
 
 @router.get("/location/radius-fetch/{user_id}")
 async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
-    location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    user = await location_collection.find_one({LocationRef.USER: user_id})
-    if not user:
+    # location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+    # user = await location_collection.find_one({LocationRef.USER: user_id})
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="User location not found, please upload location first",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+
+    if user_id not in config.tracker.locations:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User location not found, please upload location first",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
+
+    lat, long, _ = config.tracker.locations.get(user_id)
     location_table = await aggregate_locations()
 
     valid_ids = []
     for table_id, table_coords in location_table.items():
         if user_id == table_id:
             continue
-        distance = haversine(user_coords, table_coords)
+        distance = haversine((lat, long), table_coords)
         if distance <= radius:
             valid_ids.append(table_id)
 
     user_collection = await config.db.get_collection(CollectionRef.USERS)
-    valid_users = await user_collection.find({UserRef.ID: {"$in": valid_ids}}).to_list()
+    valid_users = [LocationUserDto.model_validate(data) async for data in user_collection.find({UserRef.ID: {"$in": valid_ids}})]
 
     for valid_user in valid_users:
-        valid_id = valid_user[UserRef.ID]
-        (lat, lon) = location_table[valid_id]
-        valid_user[LocationRef.LATITUDE] = lat
-        valid_user[LocationRef.LONGITUDE] = lon
+        (lat, lon) = location_table[valid_user.id]
+        valid_user.latitude = lat
+        valid_user.longitude = lon
 
     return valid_users
-
-CLASSROOM_LOCATIONS = [
-    {}
-]
-
-async def classroom_multiplier(
-        user_id: str
-) -> float:
-    user_location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    user = await user_location_collection.find_one({LocationRef.USER: user_id})
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User location not found, please upload location first",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
-    for location in CLASSROOM_LOCATIONS:
-        distance = haversine(user_coords, location["coords"])
-        if distance <= location["radius"]:
-            return 1.5
-    
-    return 1.0
