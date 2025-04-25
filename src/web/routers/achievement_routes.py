@@ -20,7 +20,7 @@ ACHIEVEMENTS = [
     {"title": "Not a loner I see", "description": "You aren't a loner anymore!", "points": 10, "min_friends": 1},
     {"title": "Got a lil something going ;)", "description": "You've made 5 friends, I see you go", "points": 25, "min_friends": 5},
     {"title": "Almost a soccer squad", "description": "Just say you're making your own team", "points": 35, "min_friends": 10},
-    {"title": "Ok Mr Popular", "description": "Really collecting people now aren't we", "points": 10, "min_friends": 20},
+    {"title": "Ok Mr Popular", "description": "Really collecting people now aren't we", "points": 50, "min_friends": 20},
 ]
 
 @router.get("/{user_id}")

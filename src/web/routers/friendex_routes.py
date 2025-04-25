@@ -53,6 +53,25 @@ async def get_friends(user_id: str) -> list:
 
     return await users_collection.find({UserRef.ID: {"$in": friends}}).to_list()
 
+@router.get("/unmet-players/{user_id}")
+async def get_unmet_players(user_id: str) -> list:
+    user_collection = await config.db.get_collection(CollectionRef.USERS)
+    user = await user_collection.find_one({UserRef.ID: user_id})
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    friend_ids = user.get("friends", [])
+    excluded_ids = friend_ids + [user_id]
+    
+    unmet = await user_collection.find(
+        {UserRef.ID: {"$nin": excluded_ids}}
+    ).to_list()
+
+    return unmet
+
 @router.post("/select/{user_id}")
 async def select_user(
     user: Annotated[UserDto, Depends(get_current_active_user)],
