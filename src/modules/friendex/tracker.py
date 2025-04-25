@@ -3,8 +3,12 @@ from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 import config
-from modules.db import CollectionRef, UserRef
+from modules.db import CollectionRef, UserRef, LocationRef
 from models.user_models import UserDto
+
+from modules.friendex import locations
+from web.routers.location_routes import haversine
+from fastapi import HTTPException, status
 
 
 LOCATION_TTL = 30
@@ -65,6 +69,27 @@ class PlayersTracker():
     def add_tracking(self, id_1: str, id_2: str) -> None:
         # Have ttl logic for tracking whilst rewarding points
         self.currently_tracking[id_1] = (id_2, datetime.now(timezone.utc))
-    
+        ...
+
     def remove_tracking(self, id_1: str) -> None:
         self.currently_tracking.pop(id_1)
+    
+    async def classroom_multiplier(
+        user_id: str
+    ) -> float:
+        user_location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+        user = await user_location_collection.find_one({LocationRef.USER: user_id})
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User location not found, please upload location first",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
+        for location in locations.CLASSROOM_LOCATIONS:
+            distance = haversine(user_coords, location["coords"])
+            if distance <= location["radius"]/1000:
+                return 1.5
+    
+        return 1.0
