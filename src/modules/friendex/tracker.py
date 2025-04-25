@@ -70,6 +70,7 @@ class PlayersTracker():
         user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: user_id}))
 
         points = POINTS_PER_TICK * multiplier
+
         user.points += points
         tracking = self.get_player_tracking(user_id)
         if tracking:
@@ -157,9 +158,9 @@ class PlayersTracker():
         ))
         ...
 
-    async def remove_tracking(self, id_1: str) -> None:
+    async def remove_tracking(self, id: str) -> None:
         for tracking in self.currently_tracking:
-            if tracking.id_1 == id_1 or tracking.id_2 == id_1:
+            if tracking.id_1 == id or tracking.id_2 == id:
                 user_collection = await config.db.get_collection(CollectionRef.USERS)
 
                 user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: tracking.id_1}))
