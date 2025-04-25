@@ -26,11 +26,18 @@ ACHIEVEMENTS = [
 @router.get("/{user_id}")
 async def get_achievements(user_id: str) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
-    user = await collection.find_one({UserRef.ID: user_id})
+    
+    result = await collection.aggregate(
+        [
+        {"$match": {UserRef.ID: user_id}},
+        {"$project": {UserRef.ACHIEVEMENTS: 1}},
+        ]
+    ).to_list()
 
-    if not user:
+    if not result:
         return {"achievements": []}
-    return {"achievements": user.get(UserRef.ACHIEVEMENTS, [])}
+
+    return {"achievements": result[0].get(UserRef.ACHIEVEMENTS, [])}
 
 async def update_achievements(
     user_id: str
@@ -43,8 +50,12 @@ async def update_achievements(
     points = user.get("points", 0)
 
     new_achievements = []
-    for title, desc, points, min in ACHIEVEMENTS:
-        if count>= min and title not in current_achievements:
+    for achievement in ACHIEVEMENTS:
+        title = achievement['title']
+        desc = achievement['description']
+        points = achievement['points']
+        min_friends = achievement['min_friends']
+        if count>= int(min_friends) and title not in current_achievements:
             new_achievements.append({
                 "title": title, 
                 "description": desc, 

@@ -11,6 +11,8 @@ from models.user_models import UserDto
 from modules.db import CollectionRef, UserRef
 from web.auth.user_auth import get_current_active_user
 
+from web.routers.achievement_routes import update_achievements
+
 _log = logging.getLogger("uvicorn")
 router = APIRouter(
     prefix="/friendex",
@@ -134,5 +136,7 @@ async def add_friend(
         {UserRef.ID: user.id},
         {"$set": {UserRef.FRIENDS: friends}},
     )
+
+    await update_achievements(user.id)
 
     return { 'message': 'Added friend successfully' }
