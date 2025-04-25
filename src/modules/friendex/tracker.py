@@ -3,12 +3,11 @@ from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 import config
-from modules.db import CollectionRef, UserRef, LocationRef
+from modules.db import CollectionRef, UserRef
 from models.user_models import UserDto
 
 from modules.friendex import locations
 from web.routers.location_routes import haversine
-from fastapi import HTTPException, status
 
 
 LOCATION_TTL = 30
