@@ -14,12 +14,11 @@ TRACKING_TTL = 60 * 20
 class PlayersTracker():
     locations: dict[str, tuple[float, float, datetime]] = {}
     # First and second UUID is user A and B respectively, where A is the one who has selected B.
-    currently_tracking: dict[str, dict[str, datetime]] = defaultdict(dict)
+    currently_tracking: dict[str, tuple[str, datetime]] = defaultdict(dict)
 
     async def on_tick(self) -> None:
         # Give points and shit here
-
-        self.cleanup()
+        await self.cleanup()
         ...
 
     async def cleanup(self) -> None:
@@ -32,7 +31,6 @@ class PlayersTracker():
                 ids_to_remove.append(id)
         [self.locations.pop(id, None) for id in ids_to_remove]
         
-        ids_to_remove = []
         for id, player in self.currently_tracking.items():
             other_id, ttl = player
             if datetime.now(timezone.utc) - ttl > timedelta(seconds=TRACKING_TTL):
@@ -51,6 +49,13 @@ class PlayersTracker():
             await self.on_tick()
             await asyncio.sleep(1) # Adjust frequency as needed.
 
+    async def populate(self) -> None:
+        user_collection = await config.db.get_collection(CollectionRef.USERS)
+        users = [UserDto.model_validate(user) for user in await user_collection.find({UserRef.SELECTED_FRIEND: {"$ne": None}}).to_list(length=None)]
+
+        for user in users:
+            self.add_tracking(user.id, user.selected_friend)
+
     def update_location(self, id: str, lat: float, long: float) -> None:
         self.locations[id] = (lat, long, datetime.now(timezone.utc))
     
@@ -59,10 +64,7 @@ class PlayersTracker():
     
     def add_tracking(self, id_1: str, id_2: str) -> None:
         # Have ttl logic for tracking whilst rewarding points
-        self.currently_tracking[id_1][id_2] = datetime.now(timezone.utc)
+        self.currently_tracking[id_1] = (id_2, datetime.now(timezone.utc))
     
-    def remove_tracking(self, id_1: str, id_2: str = None) -> None:
-        if id_2 is None:
-            self.currently_tracking.pop(id_1)
-        else:
-            self.currently_tracking[id_1].pop(id_2, None)
+    def remove_tracking(self, id_1: str) -> None:
+        self.currently_tracking.pop(id_1)
