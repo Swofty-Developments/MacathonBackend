@@ -42,8 +42,8 @@ class PlayersTracker():
             distance = haversine((lat_1, long_1), (lat_2, long_2))
 
             if distance <= MAX_DISTANCE:
-                multiplier_1 = await self.classroom_multiplier(id_1)
-                multiplier_2 = await self.classroom_multiplier(id_2)
+                multiplier_1 = self.classroom_multiplier(id_1)
+                multiplier_2 = self.classroom_multiplier(id_2)
 
                 await self.give_points(id_1, multiplier_1)
                 await self.give_points(id_2, multiplier_2)
@@ -112,7 +112,7 @@ class PlayersTracker():
     def remove_tracking(self, id_1: str) -> None:
         self.currently_tracking.pop(id_1)
     
-    async def classroom_multiplier(self, user_id: str) -> int:
+    def classroom_multiplier(self, user_id: str) -> int:
         user_location_collection = self.locations.get(user_id)
         lat, long, _ = user_location_collection
 
