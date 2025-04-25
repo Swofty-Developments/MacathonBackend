@@ -5,14 +5,12 @@ import logging
 import math
 from typing import Annotated
 
-from datetime import datetime, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 
 import config
 from models.user_models import UserDto
 from models.user_models import PublicUserDto
-from modules.db import CollectionRef, LocationRef, UserRef
+from modules.db import CollectionRef, UserRef
 from web.auth.user_auth import get_current_active_user
 
 _log = logging.getLogger("uvicorn")
@@ -129,7 +127,7 @@ async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
             valid_ids.append(table_id)
 
     user_collection = await config.db.get_collection(CollectionRef.USERS)
-    valid_users = [LocationUserDto.model_validate(data) for data in await user_collection.find({UserRef.ID: {"$in": valid_ids}}).to_list()]
+    valid_users = [LocationUserDto.model_validate(data) async for data in user_collection.find({UserRef.ID: {"$in": valid_ids}})]
 
     for valid_user in valid_users:
         (lat, lon) = location_table[valid_user.id]

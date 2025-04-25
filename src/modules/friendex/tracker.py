@@ -113,20 +113,14 @@ class PlayersTracker():
     def remove_tracking(self, id_1: str) -> None:
         self.currently_tracking.pop(id_1)
     
-    async def classroom_multiplier(self, user_id: str) -> float:
-        user_location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-        user = await user_location_collection.find_one({LocationRef.USER: user_id})
+    async def classroom_multiplier(self, user_id: str) -> int:
+        user_location_collection = self.locations.get(user_id)
+        lat, long, _ = user_location_collection
 
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User location not found, please upload location first",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
+        user_coords = (lat, long)
         for location in locations.CLASSROOM_LOCATIONS:
             distance = haversine(user_coords, location["coords"])
             if distance <= location["radius"]/1000:
-                return 1.5
+                return 2
     
-        return 1.0
+        return 1
