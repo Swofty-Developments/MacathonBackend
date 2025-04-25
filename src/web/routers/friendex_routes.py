@@ -128,6 +128,14 @@ async def select_user(
 
     return {}
 
+@router.post("/deselect")
+async def deselect_user(
+    user: Annotated[UserDto, Depends(get_current_active_user)],
+) -> dict:
+    await config.tracker.remove_tracking(user.id)
+
+    return { 'message': 'Deselected user' }
+
 @router.post('/add-friend')
 async def add_friend(
     user: Annotated[UserDto, Depends(get_current_active_user)],
