@@ -4,7 +4,7 @@
 import logging
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 import config
@@ -20,12 +20,12 @@ router = APIRouter(
 
 
 class LeaderboardUserDto(BaseModel):
-    id: Optional[str] = None
+    _id: str
     name: str
     points: int
 
 
-@router.get("/{size}")
+@router.get("/")
 async def get_leaderboard(size: int) -> list[LeaderboardUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -33,24 +33,28 @@ async def get_leaderboard(size: int) -> list[LeaderboardUserDto]:
         [
             {"$sort": {UserRef.POINTS: -1, UserRef.NAME: 1}},
             {"$limit": int(size)},
-            {"$project": {UserRef.NAME: 1, UserRef.POINTS: 1}},
+            {"$project": {UserRef.ID: 1, UserRef.NAME: 1, UserRef.POINTS: 1}},
         ]
-    )
+    ).to_list()
 
 
 @router.get("/rank/{user_id}")
 async def get_rank(user_id: str) -> int:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    points = await collection.find_one({UserRef.ID: user_id})[UserRef.POINTS]
-    rank = (
-        await collection.aggregate(
-            [{"$match": {UserRef.POINTS: {"$lt": points}}}, {"$count": "index"}]
-        )["index"]
-        + 1
-    )
+    user = await collection.find_one({UserRef.ID: user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    points = user[UserRef.POINTS]
 
-    return await rank
+    entry = await collection.aggregate([{"$match": {UserRef.POINTS: {"$gt": points}}}, {"$count": "index"}]).to_list()
+
+    if (len(entry) == 0):
+        return 1
+    return entry[0]['index'] + 1
 
 
 async def set_points(

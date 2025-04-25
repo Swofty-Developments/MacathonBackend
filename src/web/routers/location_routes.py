@@ -6,7 +6,7 @@ import math
 from typing import Annotated
 
 from datetime import datetime, UTC
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 import config
 from models.user_models import UserDto
@@ -95,6 +95,12 @@ async def upload_location(
 async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
     user = await collection.find_one({LocationRef.USER: user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User location not found, please upload location first",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     user_coords = (user[LocationRef.LATITUDE], user[LocationRef.LONGITUDE])
     location_table = await aggregate_locations()
 
