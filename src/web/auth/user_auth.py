@@ -39,7 +39,7 @@ async def get_user(id: str) -> None | UserDto:
         user = await user_collection.find_one({UserRef.NAME: id})
     if user is None:
         return None
-
+    
     if user is not None:
         return UserDto.model_validate(user)
 

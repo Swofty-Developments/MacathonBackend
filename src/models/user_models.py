@@ -11,7 +11,7 @@ from models.achievement_models import AchievementDto
 
 
 class PublicUserDto(BaseModel):
-    _id: Optional[str] = None
+    id: Optional[str] = None
     name: str
     points: int
     questions_answered: int = 0

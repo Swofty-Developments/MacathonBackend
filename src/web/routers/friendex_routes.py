@@ -64,27 +64,27 @@ async def select_user(
 
     other_user = UserDto.model_validate(await users_collection.find_one({UserRef.ID: user_id}))
     if not other_user:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
     elif other_user.id in user.friends:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already in friends list",
         )
     elif other_user.id == user.id:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot catch yourself",
         )
     elif other_user.id in user.selected_friend:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected",
         )
     elif user.id in other_user.selected_friend:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected by the other user",
         )
@@ -104,7 +104,13 @@ async def add_friend(
 ) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
-    friends = await users_collection.find_one({UserRef.ID: user.id})["friends"]
+    entry = await users_collection.find_one({UserRef.ID: user.id})
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    friends = entry["friends"]
 
     if friend_id == user.id:
         raise HTTPException(
@@ -132,3 +138,5 @@ async def add_friend(
         {UserRef.ID: user.id},
         {"$set": {UserRef.FRIENDS: friends}},
     )
+
+    return { 'message': 'Added friend successfully' }
