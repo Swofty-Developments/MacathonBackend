@@ -57,7 +57,7 @@ def haversine(point1, point2) -> float:
 
 async def aggregate_locations() -> dict[tuple[float, float]]:
     collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    locations = await collection.find({})
+    locations = await collection.find({}).to_list()
 
     location_table = {}
     for location in locations:
@@ -93,8 +93,8 @@ async def upload_location(
 
 @router.get("/location/radius-fetch/{user_id}")
 async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
-    collection = await config.db.get_collection(CollectionRef.LOCATIONS)
-    user = await collection.find_one({LocationRef.USER: user_id})
+    location_collection = await config.db.get_collection(CollectionRef.LOCATIONS)
+    user = await location_collection.find_one({LocationRef.USER: user_id})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -112,11 +112,8 @@ async def fetch_radius(user_id: str, radius: float) -> list[LocationUserDto]:
         if distance <= radius:
             valid_ids.append(table_id)
 
-    projection = {}
-
-    valid_users = await collection.aggregate(
-        [{"$match": {UserRef.ID: {"$in": valid_ids}}}, {"$project": projection}]
-    )
+    user_collection = await config.db.get_collection(CollectionRef.USERS)
+    valid_users = await user_collection.find({UserRef.ID: {"$in": valid_ids}}).to_list()
 
     for valid_user in valid_users:
         valid_id = valid_user[UserRef.ID]

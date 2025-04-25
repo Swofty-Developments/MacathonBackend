@@ -51,11 +51,7 @@ async def get_friends(user_id: str) -> list:
         )
     friends = user.friends
 
-    projection = {}
-
-    return await users_collection.aggregate(
-        [{"$match": {UserRef.ID: {"$in": friends}}}]
-    ).to_list()
+    return await users_collection.find({UserRef.ID: {"$in": friends}}).to_list()
 
 @router.post("/select/{user_id}")
 async def select_user(
