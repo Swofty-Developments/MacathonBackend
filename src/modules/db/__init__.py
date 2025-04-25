@@ -8,6 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from .collections import CollectionRef
 from .users import UserRef
 from .locations import LocationRef
+from .pictures import PictureRef
 
 __all__ = ["UserRef", "CollectionRef", "LocationRef"]
 

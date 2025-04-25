@@ -10,7 +10,7 @@ class PlayersTracker():
 
     async def on_tick(self) -> None:
         # Give points and shit here
-        print(self.locations)
+        # print(self.locations)
         ...
     
     async def start_loop(self) -> None:

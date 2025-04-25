@@ -19,12 +19,6 @@ router = APIRouter(
 )
 
 
-class LeaderboardUserDto(BaseModel):
-    _id: str
-    name: str
-    points: int
-
-
 @router.get("/")
 async def get_leaderboard(size: int) -> list[PublicUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
