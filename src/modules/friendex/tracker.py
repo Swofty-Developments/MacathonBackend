@@ -122,17 +122,18 @@ class PlayersTracker():
         for user in users:
             self.add_tracking(user.id, user.selected_friend)
 
-    def get_selected_time_remaining(self, id: str) -> float:
+    def get_selected_time(self, id: str) -> tuple[float, float]:
         tracking = self.get_player_tracking(id)
         if not tracking:
             return 0
         
-        time_remaining = TRACKING_TTL - (datetime.now(timezone.utc) - tracking.created_at).total_seconds()
+        elapsed_time = (datetime.now(timezone.utc) - tracking.created_at).total_seconds()
+        time_remaining = TRACKING_TTL - elapsed_time
         
-        return time_remaining
+        return time_remaining, elapsed_time
     
     def get_points_accumulated(self, id: str) -> float:
-        time_remaining = self.get_selected_time_remaining(id)
+        time_remaining, elapsed_time = self.get_selected_time(id)
         if time_remaining <= 0:
             return 0
         

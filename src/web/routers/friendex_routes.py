@@ -58,9 +58,22 @@ async def get_friends(user_id: str) -> list:
 async def check_selected(
     user: Annotated[UserDto, Depends(get_current_active_user)]
 ) -> dict:
+    tracking = config.tracker.get_player_tracking(user.id)
+    if not tracking:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No selected friend",
+        )
+    
+    remaining, elapsed = config.tracker.get_selected_time(user.id)
+
+    is_initiator = tracking.id_2 == user.selected_friend
     return {
-        "selectedFriend": user.selected_friend,
-        "timeRemaining": config.tracker.get_selected_time_remaining(user.id),
+        "selectedFriend": tracking.id_2 if is_initiator else tracking.id_1,
+        "isInitiator": True if is_initiator else False,
+        "timeRemaining": remaining,
+        "elapsedTime": elapsed,
+        "questionsReady": True if remaining <= 0 else False,
         "pointsAccumulated": config.tracker.get_points_accumulated(user.id),
     }
 
