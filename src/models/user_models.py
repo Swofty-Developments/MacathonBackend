@@ -10,7 +10,7 @@ from models.question_models import QuestionDto
 from models.achievement_models import AchievementDto
 
 
-class PublicUserDto(BaseModel):
+class PublicUserDto(DBRecord):
     id: Optional[str] = None
     name: str
     points: int
@@ -22,5 +22,5 @@ class PublicUserDto(BaseModel):
     achievements: list[AchievementDto] = []
 
 
-class UserDto(PublicUserDto, DBRecord):
+class UserDto(PublicUserDto):
     hashed_password: Optional[str] = None

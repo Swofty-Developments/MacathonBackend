@@ -2,7 +2,7 @@
 # etc.
 
 import logging
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -29,12 +29,12 @@ class LeaderboardUserDto(BaseModel):
 async def get_leaderboard(size: int) -> list[PublicUserDto]:
     collection = await config.db.get_collection(CollectionRef.USERS)
 
-    return await collection.aggregate(
+    return [PublicUserDto.model_validate(data) for data in await collection.aggregate(
         [
             {"$sort": {UserRef.POINTS: -1, UserRef.NAME: 1}},
             {"$limit": int(size)},
         ]
-    ).to_list()
+    ).to_list()]
 
 
 @router.get("/rank/{user_id}")
