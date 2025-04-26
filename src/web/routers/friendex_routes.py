@@ -35,7 +35,7 @@ async def get_entry(user_id: str) -> dict:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with ID {user_id} not found",
         )
-    
+
     return entry
 
 
@@ -56,7 +56,7 @@ async def get_friends(user_id: str) -> list:
 
 @router.get('/select/check')
 async def check_selected(
-    user: Annotated[UserDto, Depends(get_current_active_user)]
+        user: Annotated[UserDto, Depends(get_current_active_user)]
 ) -> dict:
     tracking = config.tracker.get_player_tracking(user.id)
     if not tracking:
@@ -90,17 +90,18 @@ async def get_unmet_players(user_id: str) -> list:
         )
     friend_ids = user.get("friends", [])
     excluded_ids = friend_ids + [user_id]
-    
+
     unmet = await user_collection.find(
         {UserRef.ID: {"$nin": excluded_ids}}
     ).to_list()
 
     return unmet
 
+
 @router.post("/select/{user_id}")
 async def select_user(
-    user: Annotated[UserDto, Depends(get_current_active_user)],
-    user_id: str
+        user: Annotated[UserDto, Depends(get_current_active_user)],
+        user_id: str
 ) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -135,7 +136,7 @@ async def select_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already selected by another user",
         )
-    
+
     await config.tracker.remove_tracking(user.id)
     user.selected_friend = other_user.id
     await users_collection.update_one(
@@ -147,18 +148,20 @@ async def select_user(
 
     return {}
 
+
 @router.post("/deselect")
 async def deselect_user(
-    user: Annotated[UserDto, Depends(get_current_active_user)],
+        user: Annotated[UserDto, Depends(get_current_active_user)],
 ) -> dict:
     await config.tracker.remove_tracking(user.id)
 
-    return { 'message': 'Deselected user' }
+    return {'message': 'Deselected user'}
+
 
 @router.post('/add-friend')
 async def add_friend(
-    user: Annotated[UserDto, Depends(get_current_active_user)],
-    friend_id: str
+        user: Annotated[UserDto, Depends(get_current_active_user)],
+        friend_id: str
 ) -> dict:
     users_collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -181,7 +184,7 @@ async def add_friend(
             detail="Invalid friend ID",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if friend_id not in user.friends:
         user.friends.append(friend_id)
         await users_collection.update_one(
@@ -198,4 +201,4 @@ async def add_friend(
 
     await update_achievements(user.id)
 
-    return { 'message': 'Added friend successfully' }
+    return {'message': 'Added friend successfully'}

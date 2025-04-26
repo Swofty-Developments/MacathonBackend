@@ -18,19 +18,26 @@ router = APIRouter(
 
 ACHIEVEMENTS = [
     {"title": "Not a loner I see", "description": "You aren't a loner anymore!", "points": 10, "min_friends": 1},
-    {"title": "Got a lil something going ;)", "description": "You've made 5 friends, I see you go", "points": 25, "min_friends": 5},
-    {"title": "Almost a soccer squad", "description": "Just say you're making your own team", "points": 35, "min_friends": 10},
-    {"title": "Ok Mr Popular", "description": "Really collecting people now aren't we", "points": 50, "min_friends": 20},
+    {"title": "Got a lil something going ;)", "description": "You've made 5 friends, I see you go", "points": 25,
+     "min_friends": 5},
+    {"title": "Almost a soccer squad", "description": "Just say you're making your own team", "points": 35,
+     "min_friends": 10},
+    {"title": "Ok Mr Popular", "description": "Really collecting people now aren't we", "points": 50,
+     "min_friends": 20},
 ]
 
-@router.get("/{user_id}")
-async def get_achievements(user_id: str) -> dict:
+
+# Get top achievement of user based on ID
+@router.get("/has")
+async def get_achievements(
+        current_user: Annotated[UserDto, Depends(get_current_active_user)]
+) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
-    
+
     result = await collection.aggregate(
         [
-        {"$match": {UserRef.ID: user_id}},
-        {"$project": {UserRef.ACHIEVEMENTS: 1}},
+            {"$match": {UserRef.ID: current_user.id}},
+            {"$project": {UserRef.ACHIEVEMENTS: 1}},
         ]
     ).to_list()
 
@@ -39,9 +46,35 @@ async def get_achievements(user_id: str) -> dict:
 
     return {"achievements": result[0].get(UserRef.ACHIEVEMENTS, [])}
 
+
+@router.get("/missing")
+async def missing_achievements(
+        current_user: Annotated[UserDto, Depends(get_current_active_user)]
+) -> dict:
+    collection = await config.db.get_collection(CollectionRef.USERS)
+    user = await collection.find_one({UserRef.ID: current_user.id})
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    current_achievements = {ach['title'] for ach in user.get("achievements", [])}
+    missing = [
+        {
+            "title": ach["title"],
+            "description": ach["description"],
+            "points": ach["points"],
+            "min_friends": ach["min_friends"]
+        }
+        for ach in ACHIEVEMENTS
+        if ach["title"] not in current_achievements
+    ]
+
+    return {"missing_achievements": missing}
+
+
+# Update user achievement and add points based on appropriate achievement
 async def update_achievements(
-    user_id: str
-)-> dict:
+        user_id: str
+) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
     user = await collection.find_one({UserRef.ID: user_id})
 
@@ -53,18 +86,18 @@ async def update_achievements(
     for achievement in ACHIEVEMENTS:
         title = achievement['title']
         desc = achievement['description']
-        points = achievement['points']
+        ach_points = achievement['points']
         min_friends = achievement['min_friends']
-        if count>= int(min_friends) and title not in current_achievements:
+        if count >= int(min_friends) and title not in current_achievements:
             new_achievements.append({
-                "title": title, 
-                "description": desc, 
-                "reward": points
+                "title": title,
+                "description": desc,
+                "reward": ach_points
             })
 
     if new_achievements:
         await collection.update_one(
-            {UserRef.ID: user_id}, 
+            {UserRef.ID: user_id},
             {
                 "$push": {"achievements": {"$each": new_achievements}},
                 "$set": {"points": points + sum(ach["reward"] for ach in new_achievements)}
