@@ -23,6 +23,7 @@ ACHIEVEMENTS = [
     {"title": "Ok Mr Popular", "description": "Really collecting people now aren't we", "points": 50, "min_friends": 20},
 ]
 
+# Get top achievement of user based on ID
 @router.get("/{user_id}")
 async def get_achievements(user_id: str) -> dict:
     collection = await config.db.get_collection(CollectionRef.USERS)
@@ -39,6 +40,7 @@ async def get_achievements(user_id: str) -> dict:
 
     return {"achievements": result[0].get(UserRef.ACHIEVEMENTS, [])}
 
+# Update user achievement and add points based on appropriate achievement
 async def update_achievements(
     user_id: str
 )-> dict:
