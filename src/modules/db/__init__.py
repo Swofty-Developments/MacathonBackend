@@ -17,7 +17,7 @@ _log = logging.getLogger("uvicorn")
 
 class MongoClient:
     def __init__(self, uri: str = None):
-        uri = uri if uri is not None else f"mongodb://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWORD')}@{os.getenv('MONGO_HOST')}:{os.getenv('MONGO_PORT')}"
+        uri = uri if uri is not None else os.getenv("MONGODB_URI") # f"mongodb://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWORD')}@{os.getenv('MONGO_HOST')}:{os.getenv('MONGO_PORT')}"
         self.client = AsyncIOMotorClient(uri)
         self.db = self.client.get_database(os.getenv("MONGODB_DATABASE"))
 
