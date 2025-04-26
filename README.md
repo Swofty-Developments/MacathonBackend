@@ -1,6 +1,6 @@
 # Catch N Go
 
-Ever wanted to catch a Monash uni student? You can now grab one to your basement.
+Ever wanted a friend on campus? Well, now you can catch one!
 
 ## Set up locally
 0. (Optional step) Set up a virtual environment using `python3 -m venv .venv`. If using VSCode, accept using the new Python interpreter or otherwise ctrl+P and then `>Python: Select Interpreter` and choose the one located at `.\.venv`.
