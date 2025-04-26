@@ -38,6 +38,7 @@ class PlayersTracker():
             
         return None
 
+    # Run event loop every tick
     async def on_tick(self) -> None:
         # Give points and shit here
         await self.cleanup()
@@ -63,6 +64,7 @@ class PlayersTracker():
                 await self.give_points(tracking.id_1, multiplier_1)
                 await self.give_points(tracking.id_2, multiplier_2)
 
+    # Allocate points each set interval of time, accounting for classroom based multipliers
     async def give_points(self, user_id: str, multiplier: float) -> None:
         user_collection = await config.db.get_collection(CollectionRef.USERS)
         user = UserDto.model_validate(await user_collection.find_one({UserRef.ID: user_id}))
@@ -84,7 +86,7 @@ class PlayersTracker():
 
         return {"message": f"Awarded {points} points to {user.id} with multiplier {multiplier}"}
         
-
+    # Remove tracking / locations based on TTL
     async def cleanup(self) -> None:
         user_collection = await config.db.get_collection(CollectionRef.USERS)
 
@@ -108,6 +110,7 @@ class PlayersTracker():
                 tracking_to_remove.append(tracking)
         [self.currently_tracking.remove(tracking) for tracking in tracking_to_remove]
     
+    # Ensure code runs every set interval of time
     async def start_loop(self) -> None:
         while True:
             await self.on_tick()
@@ -120,6 +123,7 @@ class PlayersTracker():
         for user in users:
             self.add_tracking(user.id, user.selected_friend)
 
+    # Returns how long a player has been tracking another player
     def get_selected_time(self, id: str) -> tuple[float, float]:
         tracking = self.get_player_tracking(id)
         if not tracking:
@@ -130,6 +134,7 @@ class PlayersTracker():
         
         return time_remaining, elapsed_time
     
+    # Returns total amount of points a player has gained by tracking another player
     def get_points_accumulated(self, id: str) -> float:
         time_remaining, elapsed_time = self.get_selected_time(id)
         if time_remaining <= 0:
@@ -142,12 +147,15 @@ class PlayersTracker():
             return tracking.tracking_points_accumulated
         return self.currently_tracking[id][1]
 
+    # Update a player's location in the tracker
     def update_location(self, id: str, lat: float, long: float) -> None:
         self.locations[id] = (lat, long, datetime.now(timezone.utc))
     
+    # Remove a player's location in the tracker
     def remove_location(self, id: str) -> None:
         self.locations.pop(id, None)
     
+    # Have a player track another player
     def add_tracking(self, id_1: str, id_2: str) -> None:
         # Have ttl logic for tracking whilst rewarding points
         self.currently_tracking.append(TrackingDto(
@@ -157,6 +165,7 @@ class PlayersTracker():
         ))
         ...
 
+    # Remove the tracking of a set player
     async def remove_tracking(self, id: str) -> None:
         for tracking in self.currently_tracking:
             print(tracking.id_1, tracking.id_2, id)
@@ -173,6 +182,7 @@ class PlayersTracker():
                 self.currently_tracking.remove(tracking)
                 break
     
+    # Add a multiplier if player is currently in the vicinity of a classroom
     def classroom_multiplier(self, user_id: str) -> int:
         user_location_collection = self.locations.get(user_id)
         lat, long, _ = user_location_collection

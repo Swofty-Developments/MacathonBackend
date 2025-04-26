@@ -1,3 +1,4 @@
+# Stores locations of teaching buildings on Monash Clayton, centered at 'coords' with a radius of 'radius'
 CLASSROOM_LOCATIONS = [
     {'coords': (-37.910517, 145.1336561), 'radius': 29.9},
     {'coords': (-37.9109138, 145.1338974), 'radius': 33.2},

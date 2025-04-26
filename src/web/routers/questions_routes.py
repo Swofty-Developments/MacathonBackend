@@ -212,7 +212,8 @@ async def generate_mcq(
 
     return questions_answers
 
-
+# Validates the answers from the current authenticated user to the questions of the user corresponding to
+# 'user_id'
 @router.post("/mcq/validate/{user_id}")
 async def validate_mcq(
     user: Annotated[UserDto, Depends(get_current_active_user)],

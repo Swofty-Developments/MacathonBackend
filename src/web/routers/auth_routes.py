@@ -29,14 +29,14 @@ router = APIRouter(
     tags=["users", "auth"],
 )
 
-
+# Get information of current authenticated user
 @router.post("/me")
 async def read_users_me(
     current_user: Annotated[UserDto, Depends(get_current_active_user)],
 ) -> dict:
     return current_user.model_dump()
 
-
+# Register a new user (with username, password, and answer to initial 3 questions)
 @router.post("/register")
 async def register_user(
     username: str, password: str, questions: list[QuestionDto]
@@ -64,7 +64,7 @@ async def register_user(
 
     return {"message": "User created", "user": user}
 
-
+# Returns access token upon successful login
 @router.post("/login")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -82,7 +82,7 @@ async def login_for_access_token(
     )
     return TokenDto(access_token=access_token, token_type="bearer")
 
-
+# Deletes the account of current active user (making sure to remove all references to said user in database)
 @router.delete("/")
 async def delete_user(
     user: Annotated[UserDto, Depends(get_current_active_user)],

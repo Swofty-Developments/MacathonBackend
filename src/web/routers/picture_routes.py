@@ -19,6 +19,7 @@ router = APIRouter(
     tags=["users", "picture"],
 )
 
+# Returns string of PNG encoded in base64
 @router.get("/get_picture/{user_id}")
 async def get_picture(user_id: str):
     picture_collection = await config.db.get_collection(CollectionRef.PICTURES)
@@ -35,7 +36,7 @@ async def get_picture(user_id: str):
     
     return { "image": user[PictureRef.PICTURE] }
 
-
+# Sets the profile picture of current authenticated user to input PNG (as string, encoded in base64)
 @router.post("/set_picture")
 async def set_picture(
     user: Annotated[UserDto, Depends(get_current_active_user)],
